@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 30px;
+  color: #1f2937;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #0f766e;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+th {
+  background: #14b8a6;
+  color: white;
+  padding: 12px;
+  text-align: left;
+  font-size: 14px;
+}
+
+td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+/* ROW HOVER */
+tr:hover {
+  background: #f0fdfa;
+}
+
+/* COMPETENCES */
+td span {
+  display: inline-block;
+  background: #e0f2f1;
+  color: #14b8a6;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin: 2px;
+}
+
+/* DELETE BUTTON */
+a {
+  text-decoration: none;
+  color: white;
+  background: #ef4444;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  display: inline-block;
+  transition: 0.2s;
+}
+
+a:hover {
+  background: #dc2626;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  body {
+    padding: 15px;
+  }
+
+  table {
+    font-size: 12px;
+  }
+
+  td, th {
+    padding: 8px;
+  }
+}

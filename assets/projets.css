@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #f9fafb;
+  margin: 0;
+  padding: 30px;
+}
+
+.container {
+  max-width: 1100px;
+  margin: auto;
+}
+
+.title {
+  font-size: 28px;
+  margin-bottom: 20px;
+  color: #0f766e;
+}
+
+/* CARD */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+/* INPUT */
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0 15px 0;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+/* BUTTON */
+button {
+  background: #14b8a6;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #0f766e;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: #14b8a6;
+  color: white;
+  padding: 10px;
+}
+
+td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/* BADGES */
+.badge {
+  background: #e0f2f1;
+  color: #0f766e;
+  padding: 5px 10px;
+  border-radius: 12px;
+  margin-right: 5px;
+  font-size: 12px;
+}
+
+/* BUTTONS */
+.btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: white;
+  font-size: 13px;
+}
+
+.red {
+  background: #ef4444;
+}
+
+.green {
+  background: #10b981;
+}
+
+.orange {
+  background: #f59e0b;
+}
+/* boutons alignés */
+.action-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+/* boutons petits */
+.btn {
+  padding: 5px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+/* couleurs */
+.orange {
+  background: #f59e0b;
+}
+
+/* form caché */
+.update-form {
+  display: none;
+  margin-top: 8px;
+}
+
+/* petits inputs */
+.update-form input {
+  width: 100%;
+  padding: 4px;
+  margin-bottom: 5px;
+  font-size: 12px;
+}

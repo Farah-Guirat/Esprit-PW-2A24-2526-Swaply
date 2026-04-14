@@ -1,0 +1,27 @@
+/* assets/css/publication.css */
+
+/* Inputs & textarea plus fluides */
+.pub-form-input {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pub-form-input:focus {
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.15);
+  transform: translateY(-1px);
+}
+
+/* Bouton publier avec effet "glow" */
+.publication-form button {
+  transition: all 0.3s ease;
+}
+.publication-form button:hover {
+  box-shadow: 0 10px 15px -3px rgb(20 184 166);
+}
+
+/* Carte publication encore plus premium */
+.card-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 25px 25px 50px -12px rgb(0 0 0 / 0.15);
+}

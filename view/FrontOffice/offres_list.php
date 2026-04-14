@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Swaply - Offres</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50">
+
+<header class="bg-white shadow p-5 flex items-center justify-between">
+
+  <h1 class="text-xl font-bold">
+    Swaply - Gestion des Offres
+  </h1>
+
+  <a href="index.php?action=add"
+     class="bg-teal-500 text-white px-4 py-2 rounded-xl hover:bg-teal-600">
+    + Ajouter une offre
+  </a>
+
+</header>
+
+<main class="max-w-6xl mx-auto p-6">
+
+  <!-- 🔍 SEARCH + FILTER -->
+  <div class="mb-6 bg-white p-4 rounded-2xl shadow flex flex-col md:flex-row gap-4">
+
+    <input type="text"
+           id="searchInput"
+           placeholder="🔍 Rechercher une offre..."
+           class="w-full md:flex-1 border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400">
+
+    <select id="filterSelect"
+            class="w-full md:w-64 border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400">
+
+      <option value="">Tous les statuts</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+      <option value="bloque">Bloqué</option>
+
+    </select>
+
+  </div>
+
+  <!-- OFFERS GRID -->
+  <div class="grid md:grid-cols-2 gap-6">
+
+    <?php foreach ($offres as $a): ?>
+
+      <div class="bg-white rounded-3xl p-8 shadow-sm offer-card">
+
+        <div class="flex justify-between items-start">
+          <h2 class="text-xl font-bold">
+            <?= htmlspecialchars($a->getTitre()) ?>
+          </h2>
+
+          <span class="text-gray-600 font-bold offer-status">
+            <?= htmlspecialchars($a->getStatut()) ?>
+          </span>
+        </div>
+
+        <p class="text-gray-600 mt-3">
+          <?= htmlspecialchars($a->getDescription()) ?>
+        </p>
+
+        <div class="mt-4 text-sm space-y-1">
+          <p>📂 <?= htmlspecialchars($a->getCategorie()) ?></p>
+          <p>🎯 <?= htmlspecialchars($a->getNiveau()) ?></p>
+          <p>📅 <?= $a->getDateLimite()?->format('Y-m-d') ?></p>
+        </div>
+
+        <div class="mt-6 flex gap-3">
+
+          <a href="index.php?action=show&id=<?= $a->getIdOffre() ?>"
+             class="flex-1 bg-teal-500 hover:bg-teal-600 text-white py-3 rounded-2xl text-center">
+            Voir détails
+          </a>
+
+          <a href="index.php?action=edit&id=<?= $a->getIdOffre() ?>"
+             class="flex-1 bg-blue-500 text-white py-3 rounded-2xl text-center">
+            Modifier
+          </a>
+
+          <button onclick="openDeleteModal(<?= $a->getIdOffre() ?>)"
+                  class="flex-1 bg-red-500 text-white py-3 rounded-2xl text-center">
+            Supprimer
+          </button>
+
+        </div>
+
+      </div>
+
+    <?php endforeach; ?>
+
+  </div>
+
+</main>
+
+<!-- MODAL DELETE -->
+<div id="deleteModal"
+     class="hidden fixed inset-0 bg-black/60 flex items-center justify-center">
+
+  <div class="bg-white p-6 rounded-2xl w-96 text-center">
+
+    <h2 class="text-xl font-bold text-red-600">
+      Confirmer suppression ?
+    </h2>
+
+    <p class="text-gray-500 mt-2">
+      Cette action est irréversible.
+    </p>
+
+    <div class="flex gap-3 mt-6">
+
+      <button onclick="closeModal()"
+              class="flex-1 bg-gray-300 py-2 rounded-xl">
+        Annuler
+      </button>
+
+      <a id="confirmDeleteBtn"
+         class="flex-1 bg-red-500 text-white py-2 rounded-xl">
+        Supprimer
+      </a>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- SCRIPT -->
+<script>
+let deleteId = null;
+
+function openDeleteModal(id) {
+    deleteId = id;
+
+    document.getElementById('deleteModal').classList.remove('hidden');
+
+    document.getElementById('confirmDeleteBtn').href =
+        "index.php?action=delete&id=" + id;
+}
+
+function closeModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+}
+
+/* 🔍 SEARCH + FILTER */
+const searchInput = document.getElementById("searchInput");
+const filterSelect = document.getElementById("filterSelect");
+const cards = document.querySelectorAll(".offer-card");
+
+function filterOffers() {
+
+    const search = searchInput.value.toLowerCase();
+    const filter = filterSelect.value.toLowerCase();
+
+    cards.forEach(card => {
+
+        const title = card.querySelector("h2").innerText.toLowerCase();
+        const status = card.querySelector(".offer-status").innerText.toLowerCase();
+
+        const matchSearch = title.includes(search);
+        const matchFilter = filter === "" || status.includes(filter);
+
+        card.style.display = (matchSearch && matchFilter) ? "block" : "none";
+    });
+}
+
+searchInput.addEventListener("input", filterOffers);
+filterSelect.addEventListener("change", filterOffers);
+</script>
+
+</body>
+</html>

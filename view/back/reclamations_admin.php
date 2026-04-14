@@ -294,6 +294,7 @@ function openStatut(id, currentStatut) {
   }
   showAlert('alertStatut', '', '');
   openModal('modalStatut');
+}
 
 function showAlert(elemId, type, msg) {
   const el = document.getElementById(elemId);

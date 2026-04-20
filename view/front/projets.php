@@ -6,143 +6,220 @@ $data = $p->getAll();
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-<link rel="stylesheet" href="../../assets/projets.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swaply - Projets</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="assets/css/front.css">
 </head>
-
 <body>
-  <div style="background:white; padding:15px 30px; box-shadow:0 2px 10px rgba(0,0,0,0.05); display:flex; justify-content:space-between; align-items:center;">
 
-  <!-- LOGO -->
-  <div style="display:flex; align-items:center; gap:10px;">
-    <div style="width:35px; height:35px; background:#14b8a6; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:bold;">
-      S
+  <!-- HEADER -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-teal-500 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">S</div>
+        <h1 class="text-2xl font-bold text-gray-800">Swaply</h1>
+      </div>
+
+      <nav class="flex items-center gap-8 text-sm font-medium">
+        <a href="index.php" class="nav-link">Accueil</a>
+        <a href="profils.html" class="nav-link">Profils</a>
+        <a href="projets.php" class="nav-link active">Projets</a>
+        <a href="offres.html" class="nav-link">Offres</a>
+        <a href="demandes.html" class="nav-link">Demandes</a>
+        <a href="publications.html" class="nav-link">Publications</a>
+        <a href="messages.html" class="nav-link">Messages</a>
+        <a href="reclamations.html" class="nav-link">Réclamations</a>
+      </nav>
+
+      <div class="w-10 h-10 bg-teal-100 rounded-2xl overflow-hidden border-2 border-white shadow">
+        <img src="https://i.pravatar.cc/150?img=68" alt="Profil" class="w-full h-full object-cover">
+      </div>
     </div>
-    <h2 style="margin:0; color:#333;">Swaply</h2>
-  </div>
+  </header>
 
-  <!-- MENU -->
-  <div style="display:flex; gap:20px;">
-    <a href="index.php">Accueil</a>
-    <a href="profils.html">Profils</a>
-    <a href="projets.php" style="color:#14b8a6; font-weight:bold;">Projets</a>
-    <a href="offres.html">Offres</a>
-    <a href="demandes.html">Demandes</a>
-    <a href="publications.html">Publications</a>
-    <a href="messages.html">Messages</a>
-    <a href="reclamations.html">Réclamations</a>
-  </div>
+  <main class="max-w-7xl mx-auto px-8 py-6">
 
-</div>
+    <!-- HERO -->
+    <div class="hero-bg rounded-3xl px-12 py-8 text-white mb-6">
+      <div class="max-w-2xl">
+        <h2 class="text-4xl font-bold leading-tight">Gérez vos projets et compétences</h2>
+        <p class="mt-2 text-gray-900 font-bold text-3xl">Ajoutez, modifiez et suivez tous vos projets collaboratifs!</p>
+      </div>
+    </div>
 
-<div class="container">
+    <!-- FORMULAIRE AJOUT -->
+    <div class="bg-white rounded-3xl p-8 shadow-sm mb-8">
+      <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
+        <span class="w-8 h-8 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center text-sm">➕</span>
+        Ajouter un projet
+      </h3>
 
-<h2 class="title">Gestion des Projets</h2>
+      <form method="POST" action="../../controller/ProjetController.php" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Nom du projet</label>
+          <input type="text" name="nom" placeholder="Ex: Application mobile..."
+            class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Description</label>
+          <input type="text" name="desc" placeholder="Décrivez le projet..."
+            class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Statut</label>
+          <select name="statut"
+            class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm bg-white">
+            <option value="En cours">En cours</option>
+            <option value="Terminé">Terminé</option>
+          </select>
+        </div>
+        <div class="md:col-span-3 flex justify-end">
+          <button name="add"
+            class="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3 rounded-2xl font-semibold text-sm transition">
+            Ajouter le projet
+          </button>
+        </div>
+      </form>
+    </div>
 
-<!-- FORM AJOUT -->
-<div class="card">
-<h3>Ajouter un projet</h3>
+    <!-- LISTE DES PROJETS -->
+    <h3 class="text-xl font-semibold text-gray-800 mb-6">Tous les projets</h3>
 
-<form method="POST" action="../../controller/ProjetController.php">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-  <label>Nom du projet</label>
-  <input type="text" name="nom">
+      <?php foreach($data as $row) { ?>
 
-  <label>Description</label>
-  <textarea name="desc"></textarea>
+      <div class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200 shadow-sm">
 
-  <label>Statut</label>
-  <input type="text" name="statut">
+        <!-- EN-TÊTE CARTE -->
+        <div class="flex items-start justify-between mb-4">
+          <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl">📁</div>
+          <span class="text-xs font-medium px-3 py-1 rounded-full
+            <?= $row['statut'] === 'Terminé' ? 'bg-emerald-100 text-emerald-600' :
+               ($row['statut'] === 'En cours' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500') ?>">
+            <?= $row['statut'] ?>
+          </span>
+        </div>
 
-  
+        <!-- NOM + DESCRIPTION -->
+        <h4 class="text-lg font-semibold text-gray-800 mb-1"><?= $row['nom_projet'] ?></h4>
+        <p class="text-sm text-gray-500 mb-4"><?= $row['description'] ?></p>
 
-  <button name="add">Ajouter</button>
-</form>
-</div>
+        <!-- COMPETENCES -->
+        <div class="flex flex-wrap gap-2 mb-5">
+          <?php
+            $comps = $p->getCompetences($row['id_projet']);
+            foreach($comps as $c) { ?>
+              <span class="bg-teal-50 text-teal-600 text-xs px-3 py-1 rounded-full font-medium">
+                <?= $c['nom_competence'] ?>
+              </span>
+          <?php } ?>
+        </div>
 
-<!-- TABLE -->
-<div class="card">
+        <!-- ACTIONS -->
+        <div class="flex gap-2 flex-wrap">
+          <a href="competences.php?id_projet=<?= $row['id_projet'] ?>"
+            class="flex-1 text-center bg-teal-50 hover:bg-teal-100 text-teal-600 text-xs font-semibold px-3 py-2 rounded-xl transition">
+            ➕ Compétences
+          </a>
+          <button onclick="toggleForm(<?= $row['id_projet'] ?>)"
+            class="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-600 text-xs font-semibold px-3 py-2 rounded-xl transition border-0 cursor-pointer">
+            ✏️ Modifier
+          </button>
+          <a href="../../controller/ProjetController.php?delete=<?= $row['id_projet'] ?>"
+            onclick="return confirm('Supprimer ce projet ?')"
+            class="flex-1 text-center bg-red-50 hover:bg-red-100 text-red-500 text-xs font-semibold px-3 py-2 rounded-xl transition">
+            🗑 Supprimer
+          </a>
+        </div>
 
-<table>
-<tr>
-  <th>Nom projet</th>
-  <th>Description</th>
-  <th>Statut</th>
-  <th>Date création</th>
-  <th>Compétences</th>
+        <!-- FORM MODIFIER CACHÉ -->
+        <form id="form-<?= $row['id_projet'] ?>" class="hidden mt-4 pt-4 border-t border-gray-100"
+          method="POST" action="../../controller/ProjetController.php">
+          <input type="hidden" name="id" value="<?= $row['id_projet'] ?>">
+          <input type="text" name="nom" value="<?= $row['nom_projet'] ?>"
+            class="w-full px-3 py-2 mb-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-teal-400">
+          <input type="text" name="desc" value="<?= $row['description'] ?>"
+            class="w-full px-3 py-2 mb-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-teal-400">
+          <select name="statut"
+            class="w-full px-3 py-2 mb-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-teal-400 bg-white">
+            <option value="En cours" <?= $row['statut'] === 'En cours' ? 'selected' : '' ?>>En cours</option>
+            <option value="Terminé" <?= $row['statut'] === 'Terminé' ? 'selected' : '' ?>>Terminé</option>
+          </select>
+          <button name="update"
+            class="w-full bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold py-2 rounded-xl transition border-0 cursor-pointer">
+            ✔ Enregistrer
+          </button>
+        </form>
 
+      </div>
 
-  <th>Actions</th>
+      <?php } ?>
 
-</tr>
+    </div>
 
-<?php while($row = $data->fetch_assoc()) { ?>
+  </main>
 
-<tr>
-  <td><b><?= $row['nom_projet'] ?></b></td>
-  <td><?= $row['description'] ?></td>
-  <td><?= $row['statut'] ?></td>
-  <td><?= $row['date_creation'] ?></td>
-
-  <!-- COMPETENCES -->
-  <td>
-    <?php 
-      $comps = $p->getCompetences($row['id_projet']);
-      while($c = $comps->fetch_assoc()) { ?>
-        <span class="badge"><?= $c['nom_competence'] ?></span>
-    <?php } ?>
-  </td>
-
-  <!-- ACTIONS -->
- <td class="actions">
-
-  <div class="action-buttons">
-    
-    <a class="btn red" href="../../controller/ProjetController.php?delete=<?= $row['id_projet'] ?>">
-      Delete
-    </a>
-
-    <a class="btn green" href="competences.php?id_projet=<?= $row['id_projet'] ?>">
-      ➕ Compétences
-    </a>
-
-    <!-- ✅ BOUTON MODIFIER -->
-    <button class="btn orange" onclick="toggleForm(<?= $row['id_projet'] ?>)">
-      Modifier
-    </button>
-
-  </div>
-
-  <!-- FORM UPDATE CACHÉ -->
-  <form id="form-<?= $row['id_projet'] ?>" class="update-form" method="POST" action="../../controller/ProjetController.php">
-
-    <input type="hidden" name="id" value="<?= $row['id_projet'] ?>">
-
-    <input type="text" name="nom" value="<?= $row['nom_projet'] ?>">
-    <input type="text" name="desc" value="<?= $row['description'] ?>">
-    <input type="text" name="statut" value="<?= $row['statut'] ?>">
-
-    <button name="update">✔</button>
-
-  </form>
-
-</td>
-
-<?php } ?>
-
-</table>
-
-</div>
-
-</div>
-
-<script>
+  <script>
 function toggleForm(id) {
   let form = document.getElementById("form-" + id);
-  form.style.display = form.style.display === "block" ? "none" : "block";
+  form.classList.toggle("hidden");
 }
-</script>
 
+function showError(input, message) {
+  let existing = input.parentNode.querySelector(".error-msg");
+  if (existing) existing.remove();
+  input.classList.add("border-red-400");
+  let msg = document.createElement("p");
+  msg.className = "error-msg text-red-500 text-xs mt-1";
+  msg.textContent = message;
+  input.parentNode.appendChild(msg);
+}
+
+function clearError(input) {
+  input.classList.remove("border-red-400");
+  let existing = input.parentNode.querySelector(".error-msg");
+  if (existing) existing.remove();
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  let forms = document.querySelectorAll("form");
+  forms.forEach(form => {
+    form.addEventListener("submit", function(e) {
+      let nom = form.querySelector("[name='nom']");
+      let desc = form.querySelector("[name='desc']");
+      if (!nom || !desc) return;
+
+      let valid = true;
+
+      clearError(nom);
+      clearError(desc);
+
+      if (nom.value.trim().length < 3) {
+        showError(nom, "Le nom doit contenir au moins 3 caractères.");
+        valid = false;
+      }
+
+      if (desc.value.trim().length < 10) {
+        showError(desc, "La description doit contenir au moins 10 caractères.");
+        valid = false;
+      }
+
+      if (!valid) e.preventDefault();
+    });
+  });
+});
+</script>
 </body>
 </html>

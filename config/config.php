@@ -1,7 +1,28 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "swaply");
+class config
+{
+    private static $pdo = null;
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    public static function getConnexion()
+    {
+        if (!isset(self::$pdo)) {
+            $servername = "localhost";
+            $username   = "root";
+            $password   = "";
+            $dbname     = "swaply";
+            try {
+                self::$pdo = new PDO(
+                    "mysql:host=$servername;dbname=$dbname",
+                    $username,
+                    $password
+                );
+                self::$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                self::$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            } catch (Exception $e) {
+                die('Erreur: ' . $e->getMessage());
+            }
+        }
+        return self::$pdo;
+    }
 }
 ?>

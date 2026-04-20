@@ -15,7 +15,7 @@ $data = $c->getAll();
   <th>Action</th>
 </tr>
 
-<?php while($row = $data->fetch_assoc()) { ?>
+<?php foreach($data as $row) { ?>
 <tr>
   <td><?= $row['id_competence'] ?></td>
   <td><?= $row['nom_competence'] ?></td>

@@ -2,8 +2,9 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Swaply - Offres</title>
-      <link rel="stylesheet" href="../src/assets/css/style.css">
+  
+  <title>Swaply - Demandes</title>
+  <link rel="stylesheet" href="../src/assets/css/style.css">
 
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -22,8 +23,8 @@
         <a href="index.html" class="nav-link ">Accueil</a>
         <a href="profils.html" class="nav-link">Profils</a>
         <a href="projets.html" class="nav-link">Projets</a>
-        <a href="index.php?action=choicee" class="nav-link active">Offres</a>
-        <a href="index.php?action=choice" class="nav-link">Demandes</a>
+        <a href="index.php?action=choicee" class="nav-link">Offres</a>
+        <a href="index.php?action=choice" class="nav-link active">Demandes</a>
         <a href="publications.html" class="nav-link">Publications</a>
         <a href="messages.html" class="nav-link">Messages</a>
         <a href="reclamations.html" class="nav-link">Réclamations</a>
@@ -42,7 +43,7 @@
 
     <input type="text"
            id="searchInput"
-           placeholder="🔍 Rechercher une offre..."
+           placeholder="🔍 Rechercher une demande..."
            class="w-full md:flex-1 border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-400">
 
     <select id="filterSelect"
@@ -57,10 +58,10 @@
 
   </div>
 
-  <!-- OFFERS GRID -->
+  <!-- DEMANDES GRID -->
   <div class="grid md:grid-cols-2 gap-6">
 
-    <?php foreach ($offres as $a): ?>
+    <?php foreach ($demandes as $a): ?>
 
       <div class="bg-white rounded-3xl p-8 shadow-sm offer-card">
 
@@ -81,22 +82,22 @@
         <div class="mt-4 text-sm space-y-1">
           <p>📂 <?= htmlspecialchars($a->getCategorie()) ?></p>
           <p>🎯 <?= htmlspecialchars($a->getNiveau()) ?></p>
-          <p>📅 <?= $a->getDateLimite()?->format('Y-m-d') ?></p>
+          <p>📅 <?= $a->getDateCreation()?->format('Y-m-d') ?></p>
         </div>
 
         <div class="mt-6 flex gap-3">
 
-          <a href="index.php?action=show&id=<?= $a->getIdOffre() ?>"
+          <a href="index.php?action=showd&id=<?= $a->getIdDemande() ?>"
              class="flex-1 bg-teal-500 hover:bg-teal-600 text-white py-3 rounded-2xl text-center">
             Voir détails
           </a>
 
-          <a href="index.php?action=edit&id=<?= $a->getIdOffre() ?>"
+          <a href="index.php?action=editd&id=<?= $a->getIdDemande() ?>"
              class="flex-1 bg-blue-500 text-white py-3 rounded-2xl text-center">
             Modifier
           </a>
 
-          <button onclick="openDeleteModal(<?= $a->getIdOffre() ?>)"
+          <button onclick="openDeleteModal(<?= $a->getIdDemande() ?>)"
                   class="flex-1 bg-red-500 text-white py-3 rounded-2xl text-center">
             Supprimer
           </button>
@@ -152,7 +153,7 @@ function openDeleteModal(id) {
     document.getElementById('deleteModal').classList.remove('hidden');
 
     document.getElementById('confirmDeleteBtn').href =
-        "index.php?action=delete&id=" + id;
+        "index.php?action=deleted&id=" + id;
 }
 
 function closeModal() {

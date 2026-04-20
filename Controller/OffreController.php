@@ -104,7 +104,7 @@ public function deleteOffre(int $id): void {
 //ajout offre
 
 
-public function storeOffre(): void {
+public function ajoutOffre(): void {
 
     $pdo = Database::getInstance();
 
@@ -128,6 +128,29 @@ public function storeOffre(): void {
 }
 
 
+public function matching(int $id_offre): array
+{
+    $pdo = Database::getInstance();
+
+    $sql = "SELECT 
+                d.id_demande,
+                d.titre,
+                d.description,
+                d.categorie,
+                d.niveau
+            FROM offres o
+            JOIN demandes d 
+                ON o.categorie = d.categorie
+                AND o.niveau = d.niveau
+            WHERE o.id_offre = ?
+            AND LOWER(o.statut) = 'active'
+            AND LOWER(d.statut) = 'active'";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$id_offre]);
+
+    return $stmt->fetchAll();
+}
 
 
 
@@ -180,32 +203,6 @@ public function updateOffre(): void {
     }
 
     return $offre;
-}
-
-
-
-public function matching(int $id_offre): array
-{
-    $pdo = Database::getInstance();
-
-    $sql = "SELECT 
-                d.id_demande,
-                d.titre,
-                d.description,
-                d.categorie,
-                d.niveau
-            FROM offres o
-            JOIN demandes d 
-                ON o.categorie = d.categorie
-                AND o.niveau = d.niveau
-            WHERE o.id_offre = ?
-            AND LOWER(o.statut) = 'active'
-            AND LOWER(d.statut) = 'active'";
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$id_offre]);
-
-    return $stmt->fetchAll();
 }
 
 // Méthode edit mise à jour

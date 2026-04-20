@@ -83,10 +83,10 @@
 </div>
 
 <div class="w-full flex justify-start">
-    <a href="index.php?action=dashboardd"
+    <a href="index.php?action=dashboard"
        class="flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-xl text-sm font-medium">
         <i class="fa-solid fa-arrow-left"></i>
-        Aller aux demandes
+        Aller aux Offres
     </a>
 </div>
 
@@ -167,48 +167,74 @@
                 </tr>
             </thead>
             <tbody id="tableBody">
-                <?php foreach ($offres as $offre): 
-                    $statutLower = strtolower($offre->getStatut());
-                ?>
-                <tr class="border-b hover:bg-gray-50 transition-colors" data-statut="<?= $statutLower ?>">
-                    <td class="p-5 font-medium"><?= htmlspecialchars($offre->getTitre()) ?></td>
-                    <td class="p-5 text-center"><?= htmlspecialchars($offre->getCategorie()) ?></td>
-                    <td class="p-5 text-center"><?= htmlspecialchars($offre->getNiveau()) ?></td>
-                    <td class="p-5 text-center text-sm">
-                        <?= $offre->getDateLimite() ? $offre->getDateLimite()->format('d/m/Y') : '-' ?>
-                    </td>
-                    <td class="p-5 text-center">
-                        <?php
-                        $badgeClass = match($statutLower) {
-                            'active' => 'bg-emerald-100 text-emerald-700',
-                            'fermée', 'fermee' => 'bg-orange-100 text-orange-700',
-                            'expirée', 'expiree' => 'bg-red-100 text-red-700',
-                            'bloque', 'bloquée' => 'bg-gray-100 text-gray-700',
-                            default => 'bg-gray-100 text-gray-700'
-                        };
-                        ?>
-                        <span class="<?= $badgeClass ?> status-badge">
-                            <?= htmlspecialchars($offre->getStatut()) ?>
-                        </span>
-                    </td>
-                    <td class="p-5 text-center">
-                        <div class="flex justify-center gap-4 text-lg">
-                            <a href="index.php?action=detailsoffre&id=<?= $offre->getIdOffre() ?>" 
-   class="text-blue-600 hover:text-blue-700" title="Détails">
-    <i class="fa-solid fa-eye"></i>
-</a>
-                            <button onclick="openBlockModal(<?= $offre->getIdOffre() ?>)" 
-                                    class="text-amber-600 hover:text-amber-700" title="Bloquer/Débloquer">
-                                <i class="fa-solid fa-ban"></i>
-                            </button>
-                            <button onclick="openDeleteModal(<?= $offre->getIdOffre() ?>)" 
-                                    class="text-red-600 hover:text-red-700" title="Supprimer">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
+                <?php foreach ($demandes as $demande): 
+    $statutLower = strtolower($demande->getStatut());
+?>
+<tr class="border-b hover:bg-gray-50 transition-colors" data-statut="<?= $statutLower ?>">
+
+    <td class="p-5 font-medium">
+        <?= htmlspecialchars($demande->getTitre()) ?>
+    </td>
+
+    <td class="p-5 text-center">
+        <?= htmlspecialchars($demande->getCategorie()) ?>
+    </td>
+
+    <td class="p-5 text-center">
+        <?= htmlspecialchars($demande->getNiveau()) ?>
+    </td>
+
+    <td class="p-5 text-center text-sm">
+        <?= $demande->getDateCreation() 
+            ? $demande->getDateCreation()->format('d/m/Y') 
+            : '-' ?>
+    </td>
+
+    <td class="p-5 text-center">
+        <?php
+        if ($statutLower === 'active') {
+            $badgeClass = 'bg-emerald-100 text-emerald-700';
+        } elseif ($statutLower === 'fermée' || $statutLower === 'fermee') {
+            $badgeClass = 'bg-orange-100 text-orange-700';
+        } elseif ($statutLower === 'expirée' || $statutLower === 'expiree') {
+            $badgeClass = 'bg-red-100 text-red-700';
+        } elseif ($statutLower === 'bloque') {
+            $badgeClass = 'bg-gray-100 text-gray-700';
+        } else {
+            $badgeClass = 'bg-gray-100 text-gray-700';
+        }
+        ?>
+        <span class="<?= $badgeClass ?> status-badge">
+            <?= htmlspecialchars($demande->getStatut()) ?>
+        </span>
+    </td>
+
+    <td class="p-5 text-center">
+        <div class="flex justify-center gap-4 text-lg">
+
+            <!-- 👁️ DETAILS -->
+            <a href="index.php?action=detailsdemande&id=<?= $demande->getIdDemande() ?>" 
+               class="text-blue-600 hover:text-blue-700">
+                <i class="fa-solid fa-eye"></i>
+            </a>
+
+            <!-- 🚫 BLOCK -->
+            <button onclick="openBlockModal(<?= $demande->getIdDemande() ?>)" 
+                    class="text-amber-600 hover:text-amber-700">
+                <i class="fa-solid fa-ban"></i>
+            </button>
+
+            <!-- 🗑️ DELETE -->
+            <button onclick="openDeleteModal(<?= $demande->getIdDemande() ?>)" 
+                    class="text-red-600 hover:text-red-700">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+
+        </div>
+    </td>
+
+</tr>
+<?php endforeach; ?>
             </tbody>
         </table>
     </div>
@@ -271,8 +297,7 @@ function cancelDelete() {
     document.getElementById('deleteModal').classList.add('hidden');
 }
 function confirmDelete() {
-    if (currentDeleteId) window.location.href = `index.php?action=dashboard_delete&id=${currentDeleteId}`;
-}
+window.location.href = `index.php?action=dashboard_delete_demande&id=${currentDeleteId}`;}
 
 // Modals Block
 function openBlockModal(id) {
@@ -284,8 +309,7 @@ function cancelBlock() {
     document.getElementById('blockModal').classList.add('hidden');
 }
 function confirmBlock() {
-    if (currentBlockId) window.location.href = `index.php?action=dashboard_block&id=${currentBlockId}`;
-}
+window.location.href = `index.php?action=dashboard_block_demande&id=${currentBlockId}`;}
 
 // Export
 function exportData() {

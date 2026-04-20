@@ -35,8 +35,8 @@
         <a href="index.html" class="nav-link ">Accueil</a>
         <a href="profils.html" class="nav-link">Profils</a>
         <a href="projets.html" class="nav-link">Projets</a>
-        <a href="index.php?action=choicee" class="nav-link active">Offres</a>
-        <a href="index.php?action=choice" class="nav-link">Demandes</a>
+        <a href="index.php?action=choicee" class="nav-link">Offres</a>
+        <a href="index.php?action=choice" class="nav-link active">Demandes</a>
         <a href="publications.html" class="nav-link">Publications</a>
         <a href="messages.html" class="nav-link">Messages</a>
         <a href="reclamations.html" class="nav-link">Réclamations</a>
@@ -53,7 +53,7 @@
 
   <!-- TITLE -->
   <div class="text-center mb-16">
-    <h1 class="text-5xl font-bold text-gray-800">Offres</h1>
+    <h1 class="text-5xl font-bold text-gray-800">Demandes</h1>
     <p class="text-gray-500 mt-5 text-xl">Choisissez ce que vous voulez faire</p>
   </div>
 
@@ -61,7 +61,7 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-4xl mx-auto">
 
     <!-- EXPLORER -->
-    <a href="index.php?action=list"
+    <a href="index.php?action=listd"
        class="choice-card group bg-gradient-to-br from-teal-500 to-cyan-600 text-white rounded-3xl p-16 flex flex-col items-center justify-center text-center min-h-[420px] shadow-lg">
 
       <div class="w-28 h-28 bg-white/25 backdrop-blur-xl rounded-3xl flex items-center justify-center text-7xl mb-10 group-hover:scale-110 transition">
@@ -70,13 +70,13 @@
 
       <h2 class="text-4xl font-semibold mb-3">Explorer</h2>
       <p class="text-teal-100 text-lg max-w-xs">
-        Parcourir toutes les offres disponibles
+        Parcourir toutes les demandes disponibles
       </p>
 
     </a>
 
     <!-- PUBLIER -->
-    <a href="index.php?action=add"
+    <a href="index.php?action=add_demande"
        class="choice-card group bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-3xl p-16 flex flex-col items-center justify-center text-center min-h-[420px] shadow-lg">
 
       <div class="w-28 h-28 bg-white/25 backdrop-blur-xl rounded-3xl flex items-center justify-center text-7xl mb-10 group-hover:scale-110 transition">
@@ -85,7 +85,7 @@
 
       <h2 class="text-4xl font-semibold mb-3">Publier</h2>
       <p class="text-blue-100 text-lg max-w-xs">
-        Publier une nouvelle offre
+        Publier une nouvelle demande
       </p>
 
     </a>

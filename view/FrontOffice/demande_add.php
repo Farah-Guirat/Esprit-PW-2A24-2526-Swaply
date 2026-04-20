@@ -7,7 +7,7 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-      <link rel="stylesheet" href="../src/assets/css/style.css">
+    <link rel="stylesheet" href="../src/assets/css/style.css">
 
 
   <style>
@@ -44,8 +44,8 @@
         <a href="index.html" class="nav-link ">Accueil</a>
         <a href="profils.html" class="nav-link">Profils</a>
         <a href="projets.html" class="nav-link">Projets</a>
-        <a href="index.php?action=choicee" class="nav-link active">Offres</a>
-        <a href="index.php?action=choice" class="nav-link">Demandes</a>
+        <a href="index.php?action=choicee" class="nav-link">Offres</a>
+        <a href="index.php?action=choice" class="nav-link active">Demandes</a>
         <a href="publications.html" class="nav-link">Publications</a>
         <a href="messages.html" class="nav-link">Messages</a>
         <a href="reclamations.html" class="nav-link">Réclamations</a>
@@ -64,16 +64,16 @@
 
     <!-- HEADER -->
     <div class="bg-gradient-to-r from-teal-600 to-cyan-600 px-8 py-10 text-white">
-      <h1 class="text-3xl font-bold">Créer une nouvelle offre</h1>
+      <h1 class="text-3xl font-bold">Créer une nouvelle demande</h1>
       <p class="text-teal-100 mt-1">Publiez une opportunité en quelques secondes</p>
     </div>
 
     <!-- FORM -->
-    <form id="offreForm" method="POST" action="index.php?action=ajout" class="p-8 space-y-6">
+    <form id="demForm" method="POST" action="index.php?action=ajoutd" class="p-8 space-y-6">
 
       <!-- TITRE -->
       <div>
-        <label class="text-sm font-semibold text-gray-700">Titre de l'offre</label>
+        <label class="text-sm font-semibold text-gray-700">Titre de la demande</label>
         <input id="titre" name="titre" type="text"
                class="input-focus w-full mt-2 px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200"
                placeholder="Ex: Développeur Full Stack Senior">
@@ -121,18 +121,12 @@
 
       </div>
 
-      <!-- DATE -->
-      <div>
-        <label class="text-sm font-semibold text-gray-700">Date limite</label>
-        <input type="date" id="dateLimite" name="date_limite"
-               class="input-focus w-full mt-2 px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200">
-        <small id="error-date" class="text-red-500 text-sm"></small>
-      </div>
+      
 
       <!-- BUTTON -->
       <button id="submitBtn" type="submit"
               class="w-full mt-6 bg-gradient-to-r from-teal-600 to-cyan-600 text-white py-4 rounded-2xl font-semibold">
-        <i class="fa-solid fa-paper-plane"></i> Publier l'offre
+        <i class="fa-solid fa-paper-plane"></i> Publier la demande
       </button>
 
     </form>
@@ -154,7 +148,7 @@
      class="fixed top-6 right-6 space-y-3 z-50"></div>
 
 <!-- JS -->
-<script src="../src/assets/offre_add.js"></script>
+<script src="../src/assets/demande_add.js"></script>
 
 </body>
 </html>

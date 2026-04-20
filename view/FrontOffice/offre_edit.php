@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Swaply - Modifier l'offre</title>
+      <link rel="stylesheet" href="../src/assets/css/style.css">
+
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
@@ -21,25 +23,30 @@
 
 <body class="bg-gradient-to-br from-gray-50 via-white to-teal-50 min-h-screen">
 
-<!-- NAVBAR -->
-<header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
-  <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow">
-        S
+<!-- Header -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-teal-500 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">S</div>
+        <h1 class="text-2xl font-bold text-gray-800">Swaply</h1>
       </div>
-      <h1 class="text-xl font-bold text-gray-800">Swaply</h1>
+
+      <nav class="flex items-center gap-8 text-sm font-medium">
+        <a href="index.html" class="nav-link ">Accueil</a>
+        <a href="profils.html" class="nav-link">Profils</a>
+        <a href="projets.html" class="nav-link">Projets</a>
+        <a href="index.php?action=choicee" class="nav-link active">Offres</a>
+        <a href="index.php?action=choice" class="nav-link">Demandes</a>
+        <a href="publications.html" class="nav-link">Publications</a>
+        <a href="messages.html" class="nav-link">Messages</a>
+        <a href="reclamations.html" class="nav-link">Réclamations</a>
+      </nav>
+
+      <div class="w-10 h-10 bg-teal-100 rounded-2xl overflow-hidden border-2 border-white shadow">
+        <img src="https://i.pravatar.cc/150?img=68" alt="Profil" class="w-full h-full object-cover">
+      </div>
     </div>
-
-    <nav class="hidden md:flex items-center gap-8 text-sm font-medium">
-      <a href="index.php?action=home" class="text-gray-600 hover:text-teal-600 transition">Accueil</a>
-      <a href="index.php?action=list" class="text-gray-600 hover:text-teal-600 transition">Offres</a>
-      <a href="#" class="text-gray-600 hover:text-teal-600 transition">Messages</a>
-    </nav>
-
-    <img src="https://i.pravatar.cc/150?img=68" class="w-10 h-10 rounded-2xl border shadow object-cover">
-  </div>
-</header>
+  </header>
 
 <div class="max-w-3xl mx-auto px-4 py-12">
   <div class="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">

@@ -2,6 +2,8 @@
 require_once '../../controller/ReclamationController.php';
 require_once '../../controller/ReponseController.php';
 
+session_start();
+
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header("Location: reclamations.php");
     exit;
@@ -23,6 +25,15 @@ $reponsesAll  = $reponsesStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $reponses = array_filter($reponsesAll, fn($r) => trim($r['contenu'] ?? '') !== '');
 $reponses = array_values($reponses);
+
+// ── Métier 6 : marquer cette réclamation comme vue ──
+if (!isset($_SESSION['seen_reponses'])) {
+    $_SESSION['seen_reponses'] = [];
+}
+if (!empty($reponses)) {
+    $_SESSION['seen_reponses'][] = $id;
+    $_SESSION['seen_reponses'] = array_unique($_SESSION['seen_reponses']);
+}
 
 function stars(int $n): string {
     return str_repeat('⭐', max(0, min(5, $n)));
@@ -51,9 +62,11 @@ $stepIndex = match(true) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Swaply – Détail Réclamation</title>
+<title>Swaply – Détail Réclamation #<?= $id ?></title>
 
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- Métier 8 : jsPDF pour export PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="stylesheet" href="../../assets/css/style.css">
 
 <style>
@@ -67,7 +80,6 @@ $stepIndex = match(true) {
 .s-encours   { background:#fff7ed; color:#f97316; }
 .s-traite    { background:#f0fdf4; color:#16a34a; }
 
-/* Modal */
 .modal-overlay {
     position: fixed; inset: 0;
     background: rgba(0,0,0,0.4);
@@ -77,9 +89,7 @@ $stepIndex = match(true) {
     opacity: 0; pointer-events: none;
     transition: opacity 0.25s ease;
 }
-.modal-overlay.open {
-    opacity: 1; pointer-events: all;
-}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
 .modal-box {
     background: white;
     border-radius: 24px;
@@ -89,21 +99,34 @@ $stepIndex = match(true) {
     transition: transform 0.25s ease;
     box-shadow: 0 24px 48px rgba(0,0,0,0.15);
 }
-.modal-overlay.open .modal-box {
-    transform: translateY(0);
-}
+.modal-overlay.open .modal-box { transform: translateY(0); }
 
 @keyframes fadeUp {
     from { opacity:0; transform:translateY(14px); }
     to   { opacity:1; transform:translateY(0); }
 }
 .fade-up { animation: fadeUp .35s ease both; }
+
+/* Toast PDF */
+#pdfToast {
+    position: fixed; bottom: 28px; right: 28px; z-index: 999;
+    background: #14b8a6; color: white;
+    padding: 14px 22px; border-radius: 16px;
+    font-size: 14px; font-weight: 600;
+    box-shadow: 0 8px 24px rgba(20,184,166,.4);
+    display: flex; align-items: center; gap-10px;
+    opacity: 0; transform: translateY(16px);
+    transition: all .3s ease;
+    pointer-events: none;
+    gap: 10px;
+}
+#pdfToast.show { opacity: 1; transform: translateY(0); }
 </style>
 </head>
 
 <body class="bg-gray-50">
 
-<!-- NAVBAR -->
+<!-- ── NAVBAR ── -->
 <header class="bg-white shadow-sm sticky top-0 z-50">
   <div class="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
     <div class="flex items-center gap-3">
@@ -126,11 +149,11 @@ $stepIndex = match(true) {
   </div>
 </header>
 
-<!-- MAIN -->
+<!-- ── MAIN ── -->
 <main class="max-w-3xl mx-auto px-6 py-12 space-y-8">
 
   <!-- Carte réclamation -->
-  <div class="fade-up bg-white rounded-3xl shadow p-8 space-y-5">
+  <div class="fade-up bg-white rounded-3xl shadow p-8 space-y-5" id="reclamation-card">
 
     <div class="flex items-start justify-between gap-4">
       <div>
@@ -172,17 +195,23 @@ $stepIndex = match(true) {
     <div class="flex justify-between items-center pt-4 border-t border-gray-100">
       <a href="reclamations.php" class="text-teal-500 hover:underline text-sm">← Retour à la liste</a>
 
-      <div class="flex gap-3">
-        <!-- Bouton Modifier -->
+      <div class="flex gap-2 flex-wrap justify-end">
+        <!-- ── Métier 8 : Bouton Export PDF ── -->
+        <button onclick="exportPDF()"
+                class="bg-gray-700 text-white text-sm px-4 py-2 rounded-xl hover:bg-gray-800 transition flex items-center gap-1.5">
+          📄 Export PDF
+        </button>
+
+        <!-- Modifier -->
         <button onclick="openModal()"
-                class="bg-teal-500 text-white text-sm px-5 py-2 rounded-xl hover:bg-teal-600 transition">
+                class="bg-teal-500 text-white text-sm px-4 py-2 rounded-xl hover:bg-teal-600 transition">
           ✏️ Modifier
         </button>
 
-        <!-- Bouton Supprimer -->
+        <!-- Supprimer -->
         <a href="delete_reclamation.php?id=<?= $reclamation['id_reclamation'] ?>"
            onclick="return confirm('Supprimer cette réclamation ?');"
-           class="bg-red-500 text-white text-sm px-5 py-2 rounded-xl hover:bg-red-600 transition">
+           class="bg-red-500 text-white text-sm px-4 py-2 rounded-xl hover:bg-red-600 transition">
           🗑 Supprimer
         </a>
       </div>
@@ -249,10 +278,12 @@ $stepIndex = match(true) {
 
 </main>
 
+<!-- ── Toast PDF ── -->
+<div id="pdfToast">📄 PDF généré avec succès !</div>
+
 <!-- ── MODAL MODIFIER ── -->
 <div class="modal-overlay" id="editModal">
   <div class="modal-box">
-
     <div class="flex items-center justify-between mb-6">
       <h3 class="text-xl font-bold text-gray-800">✏️ Modifier la réclamation</h3>
       <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
@@ -261,7 +292,6 @@ $stepIndex = match(true) {
     <form method="POST" action="update_reclamation.php" class="space-y-4">
       <input type="hidden" name="id" value="<?= $id ?>">
 
-      <!-- Type -->
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-1">Type</label>
         <select name="type" class="w-full p-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
@@ -270,7 +300,6 @@ $stepIndex = match(true) {
         </select>
       </div>
 
-      <!-- Description -->
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-1">Description</label>
         <textarea name="description" required rows="4"
@@ -278,7 +307,6 @@ $stepIndex = match(true) {
         ><?= htmlspecialchars($reclamation['description']) ?></textarea>
       </div>
 
-      <!-- Note -->
       <div>
         <label class="block text-sm font-medium text-gray-600 mb-1">Note</label>
         <select name="rating" class="w-full p-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
@@ -290,7 +318,6 @@ $stepIndex = match(true) {
         </select>
       </div>
 
-      <!-- Buttons -->
       <div class="flex gap-3 pt-2">
         <button type="submit"
                 class="flex-1 bg-teal-500 text-white py-3 rounded-xl hover:bg-teal-600 transition font-medium text-sm">
@@ -302,20 +329,141 @@ $stepIndex = match(true) {
         </button>
       </div>
     </form>
-
   </div>
 </div>
 
 <script src="../../assets/js/main.js"></script>
 <script>
+// ── Modal ──
 function openModal()  { document.getElementById('editModal').classList.add('open'); }
 function closeModal() { document.getElementById('editModal').classList.remove('open'); }
-
-// Fermer en cliquant dehors
 document.getElementById('editModal').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
 });
-</script>
 
+// ── Métier 8 : Export PDF ──
+async function exportPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    const margin   = 20;
+    const pageW    = 210;
+    const contentW = pageW - margin * 2;
+    let y          = margin;
+
+    // ── En-tête ──
+    doc.setFillColor(20, 184, 166); // teal-500
+    doc.roundedRect(margin, y, contentW, 22, 4, 4, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Swaply – Reclamation #<?= $id ?>', margin + 6, y + 14);
+    y += 30;
+
+    // ── Info générale ──
+    doc.setTextColor(30, 30, 30);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Description :', margin, y);
+    doc.setFont('helvetica', 'normal');
+    const descLines = doc.splitTextToSize(<?= json_encode($reclamation['description']) ?>, contentW - 30);
+    doc.text(descLines, margin + 32, y);
+    y += descLines.length * 6 + 4;
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Type :', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(<?= json_encode($reclamation['type'] ?? '—') ?>, margin + 16, y);
+    y += 8;
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Statut :', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(<?= json_encode($reclamation['statut'] ?? 'en attente') ?>, margin + 20, y);
+    y += 8;
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Date :', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(<?= json_encode($reclamation['date_creation'] ?? '') ?>, margin + 16, y);
+    y += 8;
+
+    <?php if (!empty($reclamation['username_cible'])): ?>
+    doc.setFont('helvetica', 'bold');
+    doc.text('Utilisateur cible :', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text('@<?= htmlspecialchars($reclamation['username_cible']) ?>', margin + 44, y);
+    y += 8;
+    <?php endif; ?>
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Note :', margin, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text('<?= (int)($reclamation['rating'] ?? 0) ?> / 5', margin + 16, y);
+    y += 14;
+
+    // ── Ligne séparatrice ──
+    doc.setDrawColor(20, 184, 166);
+    doc.setLineWidth(0.5);
+    doc.line(margin, y, margin + contentW, y);
+    y += 10;
+
+    // ── Réponses ──
+    <?php if (!empty($reponses)): ?>
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(20, 184, 166);
+    doc.text('Reponses de l\'administration :', margin, y);
+    y += 8;
+
+    doc.setTextColor(30, 30, 30);
+    doc.setFontSize(10);
+
+    <?php foreach ($reponses as $idx => $rep): ?>
+    doc.setFillColor(240, 253, 250);
+    doc.roundedRect(margin, y, contentW, 4, 1, 1, 'F'); // top accent
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(margin, y + 3, contentW, 20, 2, 2, 'F');
+
+    doc.setFont('helvetica', 'normal');
+    const rep<?= $idx ?>Lines = doc.splitTextToSize(<?= json_encode($rep['contenu']) ?>, contentW - 6);
+    doc.text(rep<?= $idx ?>Lines, margin + 3, y + 10);
+
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text(<?= json_encode($rep['date_reponse'] ?? '') ?>, margin + 3, y + 20);
+    doc.text('Statut: <?= htmlspecialchars($rep['status'] ?? '') ?>', margin + contentW - 30, y + 20);
+    doc.setTextColor(30, 30, 30);
+    doc.setFontSize(10);
+
+    y += 28;
+    <?php endforeach; ?>
+    <?php else: ?>
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(150, 150, 150);
+    doc.text('Aucune reponse pour l\'instant.', margin, y);
+    y += 10;
+    <?php endif; ?>
+
+    // ── Pied de page ──
+    const footerY = 290;
+    doc.setDrawColor(230, 230, 230);
+    doc.setLineWidth(0.3);
+    doc.line(margin, footerY - 6, margin + contentW, footerY - 6);
+    doc.setFontSize(8);
+    doc.setTextColor(160, 160, 160);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Swaply – Document généré le ' + new Date().toLocaleDateString('fr-FR'), margin, footerY);
+    doc.text('Page 1/1', margin + contentW, footerY, { align: 'right' });
+
+    // ── Téléchargement ──
+    doc.save('reclamation-<?= $id ?>-swaply.pdf');
+
+    // Toast
+    const toast = document.getElementById('pdfToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+</script>
 </body>
 </html>

@@ -1,394 +1,686 @@
 <?php
 require_once '../../controller/ReclamationController.php';
+require_once '../../controller/ReponseController.php';
 
-$controller = new ReclamationController();
+$controller    = new ReclamationController();
+$repController = new ReponseController();
+
 $stmt = $controller->afficher();
 $recs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-function badgeClass(string $statut): array {
-    $s = strtolower($statut);
-    $s = str_replace(['é','è','ê','à','â','î','ï','ô','û','ù','ç'],
-                     ['e','e','e','a','a','i','i','o','u','u','c'], $s);
-    if (str_contains($s, 'traite'))  return ['bg:#dcfce7;color:#16a34a', '✅'];
-    if (str_contains($s, 'rejete') || str_contains($s, 'rejet')) return ['bg:#fee2e2;color:#dc2626', '❌'];
-    if (str_contains($s, 'cours'))   return ['bg:#fff7ed;color:#ea580c', '🔄'];
-    return ['bg:#f1f5f9;color:#64748b', '⏳'];
+function normalizeStatut(string $s): string {
+    $s = strtolower(trim($s));
+    return str_replace(
+        ['é','è','ê','ë','à','â','î','ï','ô','û','ù','ç'],
+        ['e','e','e','e','a','a','i','i','o','u','u','c'],
+        $s
+    );
 }
 
-
-$recsJson = json_encode($recs, JSON_HEX_APOS | JSON_HEX_QUOT);
+// ── Stats rapides pour KPIs ──
+$total     = count($recs);
+$enAttente = 0; $enCours = 0; $traite = 0;
+foreach ($recs as $r) {
+    $sn = normalizeStatut($r['statut'] ?? '');
+    if (str_contains($sn, 'traite'))    $traite++;
+    elseif (str_contains($sn, 'cours')) $enCours++;
+    else                                $enAttente++;
+}
 ?>
 <style>
-  .adm-wrap        { font-family:'Segoe UI',sans-serif; padding:0; }
-  .adm-topbar      { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
-  .adm-title       { font-size:22px; font-weight:700; color:#0f766e; }
-  .adm-filters     { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:20px; }
-  .adm-filters input,
-  .adm-filters select { padding:9px 14px; border:1px solid #e2e8f0; border-radius:12px; font-size:14px; outline:none; background:#fff; }
-  .adm-filters input:focus,
-  .adm-filters select:focus { border-color:#14b8a6; box-shadow:0 0 0 3px #ccfbf1; }
-  .adm-table-wrap  { background:#fff; border-radius:20px; box-shadow:0 4px 20px rgba(0,0,0,.06); overflow:hidden; }
-  table            { width:100%; border-collapse:collapse; }
-  thead            { background:#f0fdfa; }
-  thead th         { padding:14px 18px; text-align:left; font-size:13px; font-weight:600; color:#0f766e; text-transform:uppercase; letter-spacing:.5px; }
-  tbody tr         { border-top:1px solid #f1f5f9; transition:background .15s; }
-  tbody tr:hover   { background:#f8fafc; }
-  td               { padding:14px 18px; font-size:14px; color:#374151; vertical-align:middle; }
-  .desc-cell       { max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .badge-statut    { display:inline-block; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:600; }
-  .stars           { color:#f59e0b; letter-spacing:-1px; }
-  .btn             { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:10px; font-size:13px; font-weight:500; cursor:pointer; border:none; transition:all .15s; text-decoration:none; }
-  .btn-teal        { background:#14b8a6; color:#fff; }
-  .btn-teal:hover  { background:#0f766e; }
-  .btn-red         { background:#fee2e2; color:#dc2626; }
-  .btn-red:hover   { background:#fecaca; }
-  .btn-orange      { background:#fff7ed; color:#ea580c; }
-  .btn-orange:hover{ background:#fed7aa; }
-  .actions         { display:flex; gap:6px; flex-wrap:wrap; }
-  .empty-state     { text-align:center; padding:60px 20px; color:#94a3b8; }
-  .empty-state .icon { font-size:48px; margin-bottom:12px; }
-  .count-badge     { background:#14b8a6; color:#fff; font-size:12px; padding:2px 10px; border-radius:999px; margin-left:8px; }
+/* ── Variables ── */
+:root {
+  --teal:   #14b8a6;
+  --teal-d: #0f766e;
+  --red:    #ef4444;
+  --orange: #f97316;
+  --green:  #22c55e;
+}
 
+/* ── KPI mini cards ── */
+.adm-kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+.adm-kpi {
+  background:white; border-radius:16px; padding:18px 20px;
+  box-shadow:0 2px 10px rgba(0,0,0,.06);
+  border-top:3px solid transparent;
+}
+.adm-kpi .val { font-size:28px; font-weight:700; margin:4px 0 2px; }
+.adm-kpi .lbl { font-size:12px; color:#64748b; }
 
-  .modal-bg        { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); z-index:9999; align-items:center; justify-content:center; }
-  .modal-bg.open   { display:flex; }
-  .modal-box       { background:#fff; border-radius:24px; padding:32px; width:100%; max-width:480px; box-shadow:0 24px 60px rgba(0,0,0,.15); animation:slideUp .25s ease; }
-  @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
-  .modal-title     { font-size:18px; font-weight:700; color:#0f766e; margin-bottom:20px; }
-  .modal-close     { float:right; background:none; border:none; font-size:22px; cursor:pointer; color:#94a3b8; line-height:1; }
-  .modal-close:hover { color:#374151; }
-  .form-group      { margin-bottom:16px; }
-  .form-group label{ display:block; font-size:13px; font-weight:600; color:#64748b; margin-bottom:6px; }
-  .form-group textarea,
-  .form-group select{ width:100%; padding:11px 14px; border:1px solid #e2e8f0; border-radius:12px; font-size:14px; outline:none; font-family:inherit; resize:vertical; }
-  .form-group textarea:focus,
-  .form-group select:focus { border-color:#14b8a6; box-shadow:0 0 0 3px #ccfbf1; }
-  .modal-footer    { display:flex; gap:10px; margin-top:20px; }
-  .btn-full        { flex:1; padding:12px; justify-content:center; }
-  .btn-cancel      { background:#f1f5f9; color:#64748b; }
-  .btn-cancel:hover{ background:#e2e8f0; }
-  .alert           { padding:10px 16px; border-radius:10px; font-size:13px; margin-bottom:16px; display:none; }
-  .alert.success   { background:#dcfce7; color:#16a34a; border:1px solid #bbf7d0; display:block; }
-  .alert.error     { background:#fee2e2; color:#dc2626; border:1px solid #fecaca; display:block; }
+/* ── Filter bar ── */
+.adm-filters {
+  background:white; border-radius:16px; padding:14px 18px;
+  box-shadow:0 2px 10px rgba(0,0,0,.06);
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+  margin-bottom:20px;
+}
+.adm-filters input,
+.adm-filters select {
+  border:1.5px solid #e2e8f0; border-radius:10px;
+  padding:7px 12px; font-size:13px; outline:none;
+  background:#f8fafc; transition:border-color .2s;
+}
+.adm-filters input:focus,
+.adm-filters select:focus { border-color:var(--teal); background:white; }
+.adm-filters input { min-width:200px; flex:1; }
+
+/* ── Table ── */
+.adm-table-wrap {
+  background:white; border-radius:16px;
+  box-shadow:0 2px 10px rgba(0,0,0,.06);
+  overflow:hidden;
+}
+.adm-table { width:100%; border-collapse:collapse; font-size:13px; }
+.adm-table thead tr { background:#f0fdfa; }
+.adm-table th {
+  padding:13px 14px; text-align:left;
+  font-size:11px; font-weight:700; color:#0f766e;
+  text-transform:uppercase; letter-spacing:.05em;
+  border-bottom:1px solid #e2e8f0;
+}
+.adm-table td {
+  padding:13px 14px; border-bottom:1px solid #f1f5f9;
+  vertical-align:middle;
+}
+.adm-table tbody tr { transition:background .15s; }
+.adm-table tbody tr:hover { background:#f8fffe; }
+.adm-table tbody tr:last-child td { border-bottom:none; }
+
+/* ── Badges statut ── */
+.badge-st {
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px;
+}
+.st-attente { background:#fef2f2; color:#ef4444; }
+.st-cours   { background:#fff7ed; color:#f97316; }
+.st-traite  { background:#f0fdf4; color:#16a34a; }
+
+/* ── Type badge ── */
+.badge-type {
+  font-size:11px; font-weight:500; padding:2px 8px;
+  border-radius:20px; background:#f1f5f9; color:#475569;
+}
+
+/* ── Stars ── */
+.stars { color:#f59e0b; letter-spacing:-1px; }
+
+/* ── Action buttons ── */
+.btn-rep {
+  background:var(--teal); color:white;
+  border:none; border-radius:10px; padding:6px 12px;
+  font-size:12px; font-weight:600; cursor:pointer;
+  display:inline-flex; align-items:center; gap:5px;
+  transition:background .2s;
+}
+.btn-rep:hover { background:var(--teal-d); }
+
+.btn-st {
+  background:#f1f5f9; color:#475569;
+  border:none; border-radius:10px; padding:6px 10px;
+  font-size:12px; font-weight:600; cursor:pointer;
+  display:inline-flex; align-items:center; gap:4px;
+  transition:all .2s;
+}
+.btn-st:hover { background:#e2e8f0; }
+
+.btn-del {
+  background:#fef2f2; color:#ef4444;
+  border:none; border-radius:10px; padding:6px 10px;
+  font-size:12px; cursor:pointer;
+  display:inline-flex; align-items:center;
+  transition:all .2s;
+}
+.btn-del:hover { background:#fee2e2; }
+
+.actions-cell { display:flex; gap:6px; align-items:center; }
+
+/* ── Empty state ── */
+.adm-empty {
+  text-align:center; padding:60px 20px; color:#94a3b8;
+}
+
+/* ── Modal ── */
+.adm-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.45);
+  backdrop-filter:blur(4px); z-index:9999;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity .25s;
+}
+.adm-overlay.open { opacity:1; pointer-events:all; }
+.adm-modal {
+  background:white; border-radius:20px; padding:30px;
+  width:100%; max-width:480px;
+  transform:translateY(18px); transition:transform .25s;
+  box-shadow:0 24px 48px rgba(0,0,0,.18);
+}
+.adm-overlay.open .adm-modal { transform:translateY(0); }
+.adm-modal h3 { font-size:17px; font-weight:700; margin-bottom:18px; color:#1e293b; }
+.adm-modal label { font-size:12px; font-weight:600; color:#64748b; display:block; margin-bottom:5px; }
+.adm-modal textarea,
+.adm-modal select {
+  width:100%; border:1.5px solid #e2e8f0; border-radius:12px;
+  padding:10px 13px; font-size:13px; outline:none;
+  font-family:inherit; transition:border-color .2s;
+  background:#f8fafc;
+}
+.adm-modal textarea:focus,
+.adm-modal select:focus { border-color:var(--teal); background:white; }
+.adm-modal textarea { resize:none; }
+.modal-btns { display:flex; gap:10px; margin-top:18px; }
+.btn-save {
+  flex:1; background:var(--teal); color:white;
+  border:none; border-radius:12px; padding:11px;
+  font-size:13px; font-weight:600; cursor:pointer; transition:background .2s;
+}
+.btn-save:hover { background:var(--teal-d); }
+.btn-cancel {
+  flex:1; background:#f1f5f9; color:#64748b;
+  border:none; border-radius:12px; padding:11px;
+  font-size:13px; font-weight:600; cursor:pointer; transition:background .2s;
+}
+.btn-cancel:hover { background:#e2e8f0; }
+
+/* ── Statut modal ── */
+.st-options { display:flex; flex-direction:column; gap:8px; margin-top:4px; }
+.st-opt {
+  display:flex; align-items:center; gap:10px;
+  border:1.5px solid #e2e8f0; border-radius:12px;
+  padding:10px 14px; cursor:pointer; transition:all .2s;
+}
+.st-opt:hover { border-color:var(--teal); background:#f0fdfa; }
+.st-opt input[type=radio] { accent-color:var(--teal); width:16px; height:16px; }
+.st-opt span { font-size:13px; font-weight:500; }
+
+/* ── Toast ── */
+.adm-toast {
+  position:fixed; bottom:24px; right:24px; z-index:99999;
+  background:#1e293b; color:white;
+  padding:12px 20px; border-radius:14px; font-size:13px;
+  font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,.25);
+  opacity:0; transform:translateY(12px);
+  transition:all .3s ease; pointer-events:none;
+  display:flex; align-items:center; gap:8px;
+}
+.adm-toast.show { opacity:1; transform:translateY(0); }
+.adm-toast.ok  { border-left:4px solid var(--teal); }
+.adm-toast.err { border-left:4px solid var(--red); }
+
+/* ── Pagination ── */
+.adm-pagination {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px; border-top:1px solid #f1f5f9;
+  font-size:13px; color:#64748b;
+}
+.pg-btns { display:flex; gap:6px; }
+.pg-btn {
+  border:1.5px solid #e2e8f0; background:white; border-radius:8px;
+  padding:5px 12px; cursor:pointer; font-size:12px; transition:all .2s;
+}
+.pg-btn:hover:not(:disabled) { border-color:var(--teal); color:var(--teal); }
+.pg-btn.active { background:var(--teal); color:white; border-color:var(--teal); }
+.pg-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+@keyframes fadeRow {
+  from { opacity:0; transform:translateX(-6px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+.adm-table tbody tr { animation:fadeRow .25s ease both; }
 </style>
 
-<div class="adm-wrap">
-
-
-  <div class="adm-topbar">
-    <div class="adm-title">
-      📋 Réclamations
-      <span class="count-badge" id="recCountBadge"><?= count($recs) ?></span>
-    </div>
+<!-- ── KPI MINI ── -->
+<div class="adm-kpi-row">
+  <div class="adm-kpi" style="border-top-color:var(--teal)">
+    <p class="lbl">Total réclamations</p>
+    <p class="val" style="color:var(--teal-d)"><?= $total ?></p>
   </div>
-
-
-  <div class="adm-filters">
-    <input type="text"   id="fSearch"  placeholder="🔍 Rechercher..." oninput="applyFilters()">
-    <select id="fStatut" onchange="applyFilters()">
-      <option value="">Tous les statuts</option>
-      <option value="en attente">⏳ En attente</option>
-      <option value="en cours">🔄 En cours</option>
-      <option value="traité">✅ Traité</option>
-      <option value="rejeté">❌ Rejeté</option>
-    </select>
-    <select id="fType" onchange="applyFilters()">
-      <option value="">Tous les types</option>
-      <option value="person">👤 Personne</option>
-      <option value="company">🏢 Entreprise</option>
-    </select>
-    <button class="btn btn-cancel" onclick="resetFilters()">✕ Reset</button>
+  <div class="adm-kpi" style="border-top-color:var(--red)">
+    <p class="lbl">En attente</p>
+    <p class="val" style="color:var(--red)"><?= $enAttente ?></p>
   </div>
-
-
-  <div class="adm-table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>#ID</th>
-          <th>Description</th>
-          <th>Type</th>
-          <th>Utilisateur ciblé</th>
-          <th>Note</th>
-          <th>Statut</th>
-          <th>Date</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="recTableBody">
-   
-      </tbody>
-    </table>
-    <div class="empty-state" id="emptyState" style="display:none;">
-      <div class="icon">📭</div>
-      <p>Aucune réclamation trouvée</p>
-    </div>
+  <div class="adm-kpi" style="border-top-color:var(--orange)">
+    <p class="lbl">En cours</p>
+    <p class="val" style="color:var(--orange)"><?= $enCours ?></p>
   </div>
-
-</div>
-
-
-<div class="modal-bg" id="modalRepondre">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeModal('modalRepondre')">&times;</button>
-    <div class="modal-title">💬 Envoyer une réponse</div>
-    <div class="alert" id="alertRepondre"></div>
-    <p style="font-size:13px;color:#64748b;margin-bottom:16px;" id="descRepondre"></p>
-    <div>
-      <input type="hidden" id="repRecId">
-      <div class="form-group">
-        <label>Contenu de la réponse</label>
-        <textarea id="repContenu" rows="4" placeholder="Votre réponse à l'utilisateur..." required></textarea>
-      </div>
-      <div class="form-group">
-        <label>Statut de la réponse</label>
-        <select id="repStatus">
-          <option value="en cours">🔄 En cours</option>
-          <option value="traité">✅ Traité</option>
-          <option value="rejeté">❌ Rejeté</option>
-        </select>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-teal btn-full" onclick="submitRepondre()">📤 Envoyer</button>
-        <button class="btn btn-cancel btn-full" onclick="closeModal('modalRepondre')">Annuler</button>
-      </div>
-    </div>
+  <div class="adm-kpi" style="border-top-color:var(--green)">
+    <p class="lbl">Traités</p>
+    <p class="val" style="color:var(--green)"><?= $traite ?></p>
   </div>
 </div>
 
+<!-- ── FILTER BAR ── -->
+<div class="adm-filters">
+  <input type="text" id="admSearch" placeholder="🔍  Rechercher description, @username…" oninput="admFilter()">
 
-<div class="modal-bg" id="modalStatut">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeModal('modalStatut')">&times;</button>
-    <div class="modal-title">🔄 Changer le statut</div>
-    <div class="alert" id="alertStatut"></div>
-    <div>
-      <input type="hidden" id="statRecId">
-      <div class="form-group">
-        <label>Nouveau statut</label>
-        <select id="statNouv" style="padding:12px 14px;">
-          <option value="en attente">⏳ En attente</option>
-          <option value="en cours">🔄 En cours</option>
-          <option value="traité">✅ Traité</option>
-          <option value="rejeté">❌ Rejeté</option>
-        </select>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-teal btn-full" onclick="submitStatut()">💾 Enregistrer</button>
-        <button class="btn btn-cancel btn-full" onclick="closeModal('modalStatut')">Annuler</button>
-      </div>
+  <select id="admStatut" onchange="admFilter()">
+    <option value="">Tous les statuts</option>
+    <option value="en attente">⏳ En attente</option>
+    <option value="en cours">🔄 En cours</option>
+    <option value="traité">✅ Traité</option>
+  </select>
+
+  <select id="admType" onchange="admFilter()">
+    <option value="">Tous les types</option>
+    <option value="person">👤 Personne</option>
+    <option value="company">🏢 Entreprise</option>
+  </select>
+
+  <button onclick="admReset()"
+          style="border:1.5px solid #e2e8f0;background:white;border-radius:10px;
+                 padding:7px 14px;font-size:13px;cursor:pointer;color:#64748b;">
+    ✕ Reset
+  </button>
+
+  <span id="admCount" style="margin-left:auto;font-size:12px;color:#94a3b8;">
+    <?= $total ?> réclamation<?= $total>1?'s':'' ?>
+  </span>
+</div>
+
+<!-- ── TABLE ── -->
+<div class="adm-table-wrap">
+  <table class="adm-table" id="admTable">
+    <thead>
+      <tr>
+        <th>#ID</th>
+        <th>Description</th>
+        <th>Type</th>
+        <th>Utilisateur ciblé</th>
+        <th>Note</th>
+        <th>Statut</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="admTbody">
+    <?php foreach ($recs as $i => $rec):
+      $sNorm = normalizeStatut($rec['statut'] ?? '');
+      if      (str_contains($sNorm, 'traite')) { $stClass = 'st-traite';  $stLabel = 'traité'; }
+      elseif  (str_contains($sNorm, 'cours'))  { $stClass = 'st-cours';   $stLabel = 'en cours'; }
+      else                                      { $stClass = 'st-attente'; $stLabel = 'en attente'; }
+
+      $stars = str_repeat('★', (int)($rec['rating'] ?? 0)) . str_repeat('☆', 5 - (int)($rec['rating'] ?? 0));
+      $desc  = htmlspecialchars(mb_substr($rec['description'], 0, 55)) . (mb_strlen($rec['description']) > 55 ? '…' : '');
+      $date  = htmlspecialchars(substr($rec['date_creation'] ?? '', 0, 10));
+      $recId = (int)$rec['id_reclamation'];
+    ?>
+    <tr data-desc="<?= strtolower(htmlspecialchars($rec['description'])) ?>"
+        data-user="<?= strtolower(htmlspecialchars($rec['username_cible'] ?? '')) ?>"
+        data-statut="<?= $stLabel ?>"
+        data-type="<?= strtolower($rec['type'] ?? '') ?>"
+        style="animation-delay:<?= $i * 0.03 ?>s">
+      <td style="font-weight:700;color:#64748b">#<?= $recId ?></td>
+      <td style="max-width:200px;color:#1e293b"><?= $desc ?></td>
+      <td>
+        <span class="badge-type">
+          <?= ($rec['type'] ?? '') === 'company' ? '🏢 Entreprise' : '👤 Personne' ?>
+        </span>
+      </td>
+      <td>
+        <?php if (!empty($rec['username_cible'])): ?>
+        <span style="color:var(--teal);font-weight:600">@<?= htmlspecialchars($rec['username_cible']) ?></span>
+        <?php else: ?><span style="color:#cbd5e1">—</span><?php endif; ?>
+      </td>
+      <td><span class="stars"><?= $stars ?></span></td>
+      <td>
+        <span class="badge-st <?= $stClass ?>">
+          <?= $stLabel === 'traité' ? '✅' : ($stLabel === 'en cours' ? '🔄' : '⏳') ?>
+          <?= $stLabel ?>
+        </span>
+      </td>
+      <td style="color:#94a3b8"><?= $date ?></td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn-rep" onclick="openReponseModal(<?= $recId ?>)">
+            💬 Répondre
+          </button>
+          <button class="btn-st" onclick="openStatutModal(<?= $recId ?>, '<?= $stLabel ?>')">
+            📋 Statut
+          </button>
+          <button class="btn-del" onclick="deleteRec(<?= $recId ?>, this)"
+                  title="Supprimer">
+            🗑
+          </button>
+        </div>
+      </td>
+    </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table>
+
+  <!-- Empty state -->
+  <div class="adm-empty" id="admEmpty" style="display:none">
+    <div style="font-size:48px;margin-bottom:12px">🔍</div>
+    <p style="font-size:16px;font-weight:600;color:#64748b">Aucune réclamation trouvée</p>
+    <p style="font-size:13px;margin-top:4px">Modifiez vos filtres</p>
+  </div>
+
+  <!-- Pagination -->
+  <div class="adm-pagination">
+    <span id="pgInfo">Affichage de <?= $total ?> résultats</span>
+    <div class="pg-btns" id="pgBtns"></div>
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="adm-toast" id="admToast"></div>
+
+<!-- ── Modal Répondre ── -->
+<div class="adm-overlay" id="modalRep">
+  <div class="adm-modal">
+    <h3>💬 Répondre à la réclamation</h3>
+    <input type="hidden" id="repRecId">
+
+    <label>Votre réponse</label>
+    <textarea id="repContenu" rows="4" placeholder="Rédigez votre réponse…"></textarea>
+
+    <div style="margin-top:14px">
+      <label>Statut de la réponse</label>
+      <select id="repStatus">
+        <option value="en cours">🔄 En cours de traitement</option>
+        <option value="traité">✅ Traité</option>
+        <option value="rejeté">❌ Rejeté</option>
+      </select>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-save" onclick="submitReponse()">✅ Envoyer</button>
+      <button class="btn-cancel" onclick="closeModals()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal Statut ── -->
+<div class="adm-overlay" id="modalSt">
+  <div class="adm-modal">
+    <h3>📋 Changer le statut</h3>
+    <input type="hidden" id="stRecId">
+
+    <div class="st-options">
+      <label class="st-opt">
+        <input type="radio" name="adm_statut" value="en attente">
+        <span>⏳ En attente</span>
+      </label>
+      <label class="st-opt">
+        <input type="radio" name="adm_statut" value="en cours">
+        <span>🔄 En cours</span>
+      </label>
+      <label class="st-opt">
+        <input type="radio" name="adm_statut" value="traité">
+        <span>✅ Traité</span>
+      </label>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-save" onclick="submitStatut()">💾 Enregistrer</button>
+      <button class="btn-cancel" onclick="closeModals()">Annuler</button>
     </div>
   </div>
 </div>
 
 <script>
+// ══════════════════════════════════════════
+//  FILTER + SEARCH (Métier 5 back)
+// ══════════════════════════════════════════
+const PER_PAGE = 8;
+let currentPage = 1;
+let visibleRows = [];
 
-const ALL_RECS = <?= $recsJson ?>;
-let currentRecs = [...ALL_RECS];
+function admFilter() {
+    const q   = document.getElementById('admSearch').value.toLowerCase().trim();
+    const st  = document.getElementById('admStatut').value.toLowerCase();
+    const tp  = document.getElementById('admType').value.toLowerCase();
+    const rows = document.querySelectorAll('#admTbody tr');
 
-function badgeHtml(statut) {
-  const s = (statut || '').toLowerCase()
-    .replace(/[éèê]/g,'e').replace(/[àâ]/g,'a').replace(/[îï]/g,'i')
-    .replace(/[ôö]/g,'o').replace(/[ùûü]/g,'u').replace('ç','c');
-  if (s.includes('traite'))  return ['bg:#dcfce7;color:#16a34a', '✅'];
-  if (s.includes('rejete') || s.includes('rejet')) return ['bg:#fee2e2;color:#dc2626', '❌'];
-  if (s.includes('cours'))   return ['bg:#fff7ed;color:#ea580c', '🔄'];
-  return ['bg:#f1f5f9;color:#64748b', '⏳'];
+    visibleRows = [];
+    rows.forEach(row => {
+        const desc  = row.dataset.desc  || '';
+        const user  = row.dataset.user  || '';
+        const statut= row.dataset.statut|| '';
+        const type  = row.dataset.type  || '';
+
+        const matchQ  = !q  || desc.includes(q) || user.includes(q);
+        const matchSt = !st || statut.includes(st.replace('é','e').replace('î','i'));
+        const matchTp = !tp || type === tp;
+
+        if (matchQ && matchSt && matchTp) {
+            visibleRows.push(row);
+        }
+        row.style.display = 'none';
+    });
+
+    document.getElementById('admCount').textContent =
+        visibleRows.length + ' réclamation' + (visibleRows.length > 1 ? 's' : '');
+    document.getElementById('admEmpty').style.display =
+        visibleRows.length === 0 ? 'block' : 'none';
+
+    currentPage = 1;
+    renderPage();
 }
 
+function renderPage() {
+    const start = (currentPage - 1) * PER_PAGE;
+    const end   = start + PER_PAGE;
+    visibleRows.forEach((row, i) => {
+        row.style.display = (i >= start && i < end) ? '' : 'none';
+        row.style.animationDelay = ((i - start) * 0.03) + 's';
+    });
 
-function renderTable(recs) {
-  const tbody = document.getElementById('recTableBody');
-  const empty = document.getElementById('emptyState');
-  document.getElementById('recCountBadge').textContent = recs.length;
+    // Pagination buttons
+    const total  = visibleRows.length;
+    const pages  = Math.ceil(total / PER_PAGE);
+    const pgBtns = document.getElementById('pgBtns');
+    const pgInfo = document.getElementById('pgInfo');
 
-  if (!recs.length) {
-    tbody.innerHTML = '';
-    empty.style.display = 'block';
-    return;
-  }
-  empty.style.display = 'none';
+    pgInfo.textContent = `Affichage de ${Math.min(end, total)} / ${total} résultats`;
 
-  tbody.innerHTML = recs.map(r => {
-    const [style, icon] = badgeHtml(r.statut || '');
-    const stars = '⭐'.repeat(Math.min(5, Math.max(0, parseInt(r.rating) || 0))) || '—';
-    const desc  = (r.description || '').replace(/"/g, '&quot;');
-    const descEsc = (r.description || '').replace(/'/g, "\\'");
-    const statut  = (r.statut || 'en attente');
-    const statutEsc = statut.replace(/'/g, "\\'");
-    const date = (r.date_creation || '').substring(0, 10);
-    const typeLabel = r.type === 'company' ? '🏢 Entreprise' : '👤 Personne';
-    const userCible = r.username_cible
-      ? `<span style="background:#f0fdfa;color:#0f766e;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:600;">@${r.username_cible}</span>`
-      : `<span style="color:#cbd5e1">—</span>`;
+    pgBtns.innerHTML = '';
+    if (pages <= 1) return;
 
-    return `<tr id="row-${r.id_reclamation}">
-      <td><strong>#${r.id_reclamation}</strong></td>
-      <td class="desc-cell" title="${desc}">${desc}</td>
-      <td>${typeLabel}</td>
-      <td>${userCible}</td>
-      <td class="stars">${stars}</td>
-      <td><span class="badge-statut" style="${style}">${icon} ${statut}</span></td>
-      <td style="color:#94a3b8;font-size:13px;">${date}</td>
-      <td>
-        <div class="actions">
-          <button class="btn btn-teal"   onclick="openRepondre(${r.id_reclamation}, '${descEsc}')">💬 Répondre</button>
-          <button class="btn btn-orange" onclick="openStatut(${r.id_reclamation}, '${statutEsc}')">🔄 Statut</button>
-          <button class="btn btn-red"    onclick="supprimerRec(${r.id_reclamation})">🗑</button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
+    // Prev
+    const prev = document.createElement('button');
+    prev.className = 'pg-btn'; prev.textContent = '‹';
+    prev.disabled = currentPage === 1;
+    prev.onclick = () => { currentPage--; renderPage(); };
+    pgBtns.appendChild(prev);
+
+    // Pages
+    for (let p = 1; p <= pages; p++) {
+        const btn = document.createElement('button');
+        btn.className = 'pg-btn' + (p === currentPage ? ' active' : '');
+        btn.textContent = p;
+        btn.onclick = () => { currentPage = p; renderPage(); };
+        pgBtns.appendChild(btn);
+    }
+
+    // Next
+    const next = document.createElement('button');
+    next.className = 'pg-btn'; next.textContent = '›';
+    next.disabled = currentPage === pages;
+    next.onclick = () => { currentPage++; renderPage(); };
+    pgBtns.appendChild(next);
 }
 
-
-function normalize(s) {
-  return (s || '').toLowerCase()
-    .replace(/[éèê]/g,'e').replace(/[àâ]/g,'a').replace(/[îï]/g,'i')
-    .replace(/[ôö]/g,'o').replace(/[ùûü]/g,'u').replace('ç','c');
+function admReset() {
+    document.getElementById('admSearch').value = '';
+    document.getElementById('admStatut').value = '';
+    document.getElementById('admType').value   = '';
+    admFilter();
 }
 
-function applyFilters() {
-  const search = normalize(document.getElementById('fSearch').value);
-  const statut = normalize(document.getElementById('fStatut').value);
-  const type   = document.getElementById('fType').value;
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+    admFilter();
+});
+// Si déjà injecté (SPA)
+admFilter();
 
-  currentRecs = ALL_RECS.filter(r => {
-    if (search && !normalize(r.description).includes(search)) return false;
-    if (statut && !normalize(r.statut || '').includes(statut)) return false;
-    if (type   && r.type !== type) return false;
-    return true;
-  });
-  renderTable(currentRecs);
+// ══════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════
+function showToast(msg, ok = true) {
+    const t = document.getElementById('admToast');
+    t.textContent = (ok ? '✅ ' : '❌ ') + msg;
+    t.className = 'adm-toast show ' + (ok ? 'ok' : 'err');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 3500);
 }
 
-function resetFilters() {
-  document.getElementById('fSearch').value = '';
-  document.getElementById('fStatut').value = '';
-  document.getElementById('fType').value   = '';
-  applyFilters();
+// ══════════════════════════════════════════
+//  MODALS
+// ══════════════════════════════════════════
+function closeModals() {
+    document.getElementById('modalRep').classList.remove('open');
+    document.getElementById('modalSt').classList.remove('open');
 }
 
-
-function openModal(id)  { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-document.querySelectorAll('.modal-bg').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+['modalRep','modalSt'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function(e) {
+        if (e.target === this) closeModals();
+    });
 });
 
-function openRepondre(id, desc) {
-  document.getElementById('repRecId').value   = id;
-  document.getElementById('repContenu').value = '';
-  document.getElementById('repStatus').value  = 'en cours';
-  document.getElementById('descRepondre').textContent = '📝 ' + desc.substring(0, 80) + (desc.length > 80 ? '…' : '');
-  showAlert('alertRepondre', '', '');
-  openModal('modalRepondre');
+// ── Répondre ──
+function openReponseModal(id) {
+    document.getElementById('repRecId').value   = id;
+    document.getElementById('repContenu').value = '';
+    document.getElementById('repStatus').value  = 'en cours';
+    document.getElementById('modalRep').classList.add('open');
+    setTimeout(() => document.getElementById('repContenu').focus(), 300);
 }
 
-function openStatut(id, currentStatut) {
-  document.getElementById('statRecId').value = id;
-  const sel = document.getElementById('statNouv');
-  for (let opt of sel.options) {
-    if (opt.value.toLowerCase() === currentStatut.toLowerCase()) { sel.value = opt.value; break; }
-  }
-  showAlert('alertStatut', '', '');
-  openModal('modalStatut');
+function submitReponse() {
+    const id      = document.getElementById('repRecId').value;
+    const contenu = document.getElementById('repContenu').value.trim();
+    const status  = document.getElementById('repStatus').value;
+
+    if (!contenu) { showToast('Veuillez écrire une réponse.', false); return; }
+
+    const fd = new FormData();
+    fd.append('id_reclamation', id);
+    fd.append('contenu', contenu);
+    fd.append('status', status);
+
+    fetch('reponse_admin.php', { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                showToast('Réponse envoyée avec succès !');
+                closeModals();
+                // Mettre à jour le badge statut dans la table si "traité"
+                updateRowStatut(id, status.includes('traite') || status.includes('traité') ? 'traité' : 'en cours');
+            } else {
+                showToast(data.msg || 'Erreur lors de l\'envoi.', false);
+            }
+        })
+        .catch(() => showToast('Erreur réseau.', false));
 }
 
-function showAlert(elemId, type, msg) {
-  const el = document.getElementById(elemId);
-  el.className = 'alert ' + type;
-  el.textContent = msg;
-  if (msg) setTimeout(() => el.className = 'alert', 3500);
+// ── Statut ──
+function openStatutModal(id, currentStatut) {
+    document.getElementById('stRecId').value = id;
+    const radios = document.querySelectorAll('input[name="adm_statut"]');
+    radios.forEach(r => {
+        r.checked = (r.value === currentStatut);
+    });
+    document.getElementById('modalSt').classList.add('open');
 }
-
-
-function updateLocalStatut(id, newStatut) {
-  const rec = ALL_RECS.find(r => r.id_reclamation == id);
-  if (rec) rec.statut = newStatut;
-  applyFilters();
-}
-
-function removeLocalRec(id) {
-  const idx = ALL_RECS.findIndex(r => r.id_reclamation == id);
-  if (idx !== -1) ALL_RECS.splice(idx, 1);
-  applyFilters();
-}
-
-
-function supprimerRec(id) {
-  if (!confirm('Supprimer cette réclamation ?')) return;
-  fetch('delete_reclamation_admin.php?id=' + id)
-    .then(r => r.json())
-    .then(data => {
-      if (data.ok) {
-        removeLocalRec(id);
-      } else {
-        alert('Erreur : ' + (data.msg || 'Réessayez'));
-      }
-    })
-    .catch(() => alert('Erreur réseau'));
-}
-
-
-function submitRepondre() {
-  const id      = document.getElementById('repRecId').value;
-  const contenu = document.getElementById('repContenu').value.trim();
-  const status  = document.getElementById('repStatus').value;
-
-  if (!contenu) { showAlert('alertRepondre', 'error', '❌ Le contenu est requis'); return; }
-
-  const fd = new FormData();
-  fd.append('id_reclamation', id);
-  fd.append('contenu', contenu);
-  fd.append('status', status);
-
-  fetch('reponse_admin.php', { method: 'POST', body: fd })
-    .then(r => r.json())
-    .then(data => {
-      if (data.ok) {
-    
-        const sNorm = status.toLowerCase().replace(/[éèê]/g,'e').replace(/[àâ]/g,'a');
-        const newStatut = (sNorm.includes('traite') || sNorm.includes('rejete') || sNorm.includes('rejet'))
-          ? 'traité' : 'en cours';
-        showAlert('alertRepondre', 'success', '✅ Réponse envoyée avec succès !');
-        setTimeout(() => {
-          closeModal('modalRepondre');
-          updateLocalStatut(id, newStatut);
-        }, 1000);
-      } else {
-        showAlert('alertRepondre', 'error', '❌ Erreur : ' + (data.msg || 'Réessayez'));
-      }
-    })
-    .catch(() => showAlert('alertRepondre', 'error', '❌ Erreur réseau'));
-}
-
 
 function submitStatut() {
-  const id     = document.getElementById('statRecId').value;
-  const statut = document.getElementById('statNouv').value;
+    const id     = document.getElementById('stRecId').value;
+    const statut = document.querySelector('input[name="adm_statut"]:checked')?.value;
 
-  const fd = new FormData();
-  fd.append('id_reclamation', id);
-  fd.append('statut', statut);
+    if (!statut) { showToast('Choisissez un statut.', false); return; }
 
-  fetch('statut_admin.php', { method: 'POST', body: fd })
-    .then(r => r.json())
-    .then(data => {
-      if (data.ok) {
-        showAlert('alertStatut', 'success', '✅ Statut mis à jour !');
-        setTimeout(() => {
-          closeModal('modalStatut');
-          updateLocalStatut(id, statut);
-        }, 1000);
-      } else {
-        showAlert('alertStatut', 'error', '❌ Erreur : ' + (data.msg || 'Réessayez'));
-      }
-    })
-    .catch(() => showAlert('alertStatut', 'error', '❌ Erreur réseau'));
+    const fd = new FormData();
+    fd.append('id_reclamation', id);
+    fd.append('statut', statut);
+
+    fetch('statut_admin.php', { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                showToast('Statut mis à jour !');
+                updateRowStatut(id, statut);
+                closeModals();
+            } else {
+                showToast(data.msg || 'Erreur.', false);
+            }
+        })
+        .catch(() => showToast('Erreur réseau.', false));
 }
 
+// Mise à jour visuelle du badge dans la ligne
+function updateRowStatut(id, statut) {
+    const rows = document.querySelectorAll('#admTbody tr');
+    rows.forEach(row => {
+        const btn = row.querySelector('.btn-st');
+        if (!btn) return;
+        const delBtn = row.querySelector('.btn-del');
+        if (!delBtn) return;
+        // Repérer la bonne ligne via l'onclick du bouton delete
+        if (btn.getAttribute('onclick')?.includes('(' + id + ',') ||
+            delBtn.getAttribute('onclick')?.includes('(' + id + ',')) {
 
-renderTable(ALL_RECS);
+            // Update dataset
+            row.dataset.statut = statut;
+
+            // Update badge
+            const badge = row.querySelector('.badge-st');
+            if (badge) {
+                badge.className = 'badge-st ';
+                let cls='', icon='', label=statut;
+                if (statut === 'traité')     { cls='st-traite'; icon='✅'; }
+                else if (statut === 'en cours') { cls='st-cours'; icon='🔄'; }
+                else                         { cls='st-attente'; icon='⏳'; label='en attente'; }
+                badge.classList.add(cls);
+                badge.textContent = icon + ' ' + label;
+            }
+
+            // Update onclick du btn statut
+            btn.setAttribute('onclick', `openStatutModal(${id}, '${statut}')`);
+        }
+    });
+    // Re-filter pour mettre à jour les résultats
+    admFilter();
+}
+
+// ── Supprimer ──
+function deleteRec(id, btn) {
+    if (!confirm('Supprimer définitivement cette réclamation ?')) return;
+
+    btn.disabled = true;
+    btn.textContent = '⏳';
+
+    fetch('delete_reclamation_admin.php?id=' + id)
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                const row = btn.closest('tr');
+                row.style.transition = 'all .3s ease';
+                row.style.opacity    = '0';
+                row.style.transform  = 'translateX(20px)';
+                setTimeout(() => {
+                    row.remove();
+                    admFilter();
+                    showToast('Réclamation supprimée.');
+                }, 300);
+            } else {
+                btn.disabled = false;
+                btn.textContent = '🗑';
+                showToast(data.msg || 'Erreur suppression.', false);
+            }
+        })
+        .catch(() => {
+            btn.disabled = false;
+            btn.textContent = '🗑';
+            showToast('Erreur réseau.', false);
+        });
+}
+
+// Debounce search
+let _sTimer;
+document.getElementById('admSearch').addEventListener('input', function() {
+    clearTimeout(_sTimer);
+    _sTimer = setTimeout(() => admFilter(), 350);
+});
 </script>

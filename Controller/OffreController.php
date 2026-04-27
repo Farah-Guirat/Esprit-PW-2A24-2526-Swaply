@@ -10,8 +10,23 @@ class OffreController {
     public function listOffre(): void {
 
         $pdo = Database::getInstance();
+        // Pagination parameters
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 4; // Number of offers per page
+        $offset = ($page - 1) * $limit;
 
-        $stmt = $pdo->query("SELECT * FROM offres");
+        // Get total count
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM offres");
+        $total_offres = $stmt->fetch()['total'];
+        $total_pages = ceil($total_offres / $limit);
+
+        // Get paginated offers
+        $stmt = $pdo->prepare("SELECT * FROM offres LIMIT ? OFFSET ?");
+        $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+        $stmt->bindValue(2, $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+       
         $rows = $stmt->fetchAll();
 
         $offres = [];
@@ -33,6 +48,8 @@ class OffreController {
 
             $offres[] = $offre;
         }
+                $current_user_id = $_SESSION['user_id'] ?? null;
+
 
         require __DIR__ . '/../view/FrontOffice/offres_list.php';
     }
@@ -59,7 +76,7 @@ public function showDetailsOffre(int $id): void {
     $stmt = $pdo->prepare("UPDATE offres SET vues = vues + 1 WHERE id_offre = ?");
     $stmt->execute([$id]);
 
-    // 🔍 récupérer offre
+    //  récupérer offre
     $stmt = $pdo->prepare("SELECT * FROM offres WHERE id_offre = ?");
     $stmt->execute([$id]);
     $row = $stmt->fetch();
@@ -210,5 +227,9 @@ public function editOffre(int $id): void {
     $offre = $this->getOffreById($id);   // Utilise la nouvelle méthode
     require __DIR__ . '/../view/FrontOffice/offre_edit.php';
 }
+
+
+
+
 
 }

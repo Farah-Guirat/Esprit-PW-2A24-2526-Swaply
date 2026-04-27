@@ -37,7 +37,7 @@
 
 <main class="max-w-6xl mx-auto p-6">
 
-  <!-- 🔍 SEARCH + FILTER -->
+  <!--  SEARCH + FILTER -->
   <div class="mb-6 bg-white p-4 rounded-2xl shadow flex flex-col md:flex-row gap-4">
 
     <input type="text"
@@ -90,6 +90,8 @@
              class="flex-1 bg-teal-500 hover:bg-teal-600 text-white py-3 rounded-2xl text-center">
             Voir détails
           </a>
+                    <?php if ($current_user_id == $a->getIdU() || $current_user_id == 1): ?>
+
 
           <a href="index.php?action=edit&id=<?= $a->getIdOffre() ?>"
              class="flex-1 bg-blue-500 text-white py-3 rounded-2xl text-center">
@@ -100,6 +102,7 @@
                   class="flex-1 bg-red-500 text-white py-3 rounded-2xl text-center">
             Supprimer
           </button>
+          <?php endif; ?>
 
         </div>
 
@@ -108,6 +111,24 @@
     <?php endforeach; ?>
 
   </div>
+   <!-- PAGINATION -->
+  <div class="mt-8 flex justify-center">
+    <nav class="flex items-center space-x-2">
+      <?php if ($page > 1): ?>
+        <a href="?action=list&page=<?= $page - 1 ?>" class="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600">Précédent</a>
+      <?php endif; ?>
+
+      <?php for ($i = max(1, $page - 2); $i <= min($total_pages, $page + 2); $i++): ?>
+        <a href="?action=list&page=<?= $i ?>" class="px-4 py-2 <?= $i == $page ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-700' ?> rounded-lg hover:bg-teal-500 hover:text-white">
+          <?= $i ?>
+        </a>
+      <?php endfor; ?>
+
+      <?php if ($page < $total_pages): ?>
+        <a href="?action=list&page=<?= $page + 1 ?>" class="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600">Suivant</a>
+      <?php endif; ?>
+    </nav>
+   </div>
 
 </main>
 
@@ -159,7 +180,7 @@ function closeModal() {
     document.getElementById('deleteModal').classList.add('hidden');
 }
 
-/* 🔍 SEARCH + FILTER */
+/*  SEARCH + FILTER */
 const searchInput = document.getElementById("searchInput");
 const filterSelect = document.getElementById("filterSelect");
 const cards = document.querySelectorAll(".offer-card");

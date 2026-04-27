@@ -11,8 +11,23 @@ class demandeController {
 public function listdem(): void {
 
     $pdo = Database::getInstance();
+     // Pagination parameters
+        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+        $limit = 4; // Number of offers per page
+        $demset = ($page - 1) * $limit;
 
-    $stmt = $pdo->query("SELECT * FROM demandes");
+        // Get total count
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM demandes");
+        $total_offres = $stmt->fetch()['total'];
+        $total_pages = ceil($total_offres / $limit);
+
+        // Get paginated offers
+        $stmt = $pdo->prepare("SELECT * FROM demandes LIMIT ? OFFSET ?");
+        $stmt->bindValue(1, $limit, PDO::PARAM_INT);
+        $stmt->bindValue(2, $demset, PDO::PARAM_INT);
+        $stmt->execute();
+
+    
     $rows = $stmt->fetchAll();
 
     $demandes = [];
@@ -33,6 +48,7 @@ public function listdem(): void {
 
         $demandes[] = $demande;
     }
+                $current_user_id = $_SESSION['user_id'] ?? null;
 
     require __DIR__ . '/../view/FrontOffice/demande_list.php';
 }

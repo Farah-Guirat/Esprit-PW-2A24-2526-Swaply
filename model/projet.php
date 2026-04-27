@@ -4,16 +4,35 @@ require_once __DIR__ . "/../config/config.php";
 class Projet {
 
     public function getAll() {
+        
         $pdo = config::getConnexion();
         $stmt = $pdo->query("SELECT * FROM projets");
         return $stmt->fetchAll();
     }
+    
 
     public function add($nom, $desc, $statut) {
         $pdo = config::getConnexion();
         $stmt = $pdo->prepare("INSERT INTO projets(nom_projet, description, statut) VALUES (?, ?, ?)");
         return $stmt->execute([$nom, $desc, $statut]);
     }
+
+    public function getStatistiquesStatut() {
+    $pdo = config::getConnexion();
+    $stmt = $pdo->query("SELECT statut, COUNT(*) as total FROM projets GROUP BY statut");
+    return $stmt->fetchAll();
+}
+
+public function getStatistiquesDate() {
+    $pdo = config::getConnexion();
+    $stmt = $pdo->query("
+        SELECT DATE_FORMAT(date_creation, '%Y-%m') as mois, COUNT(*) as total 
+        FROM projets 
+        GROUP BY mois 
+        ORDER BY mois
+    ");
+    return $stmt->fetchAll();
+}
 
     public function delete($id) {
         $pdo = config::getConnexion();

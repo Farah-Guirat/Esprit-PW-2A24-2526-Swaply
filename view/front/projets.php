@@ -48,6 +48,8 @@ $data = $p->getAll();
     </div>
   </header>
 
+
+
   <main class="max-w-7xl mx-auto px-8 py-6">
 
     <!-- HERO -->
@@ -94,13 +96,25 @@ $data = $p->getAll();
     </div>
 
     <!-- LISTE DES PROJETS -->
+      <!-- RECHERCHE -->
+<div class="mb-6">
+  <input 
+    type="text" 
+    id="searchInput"
+    placeholder="🔍 Rechercher un projet (nom, description, statut)..."
+    class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm"
+  >
+</div>
     <h3 class="text-xl font-semibold text-gray-800 mb-6">Tous les projets</h3>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
       <?php foreach($data as $row) { ?>
 
-      <div class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200 shadow-sm">
+    <div class="card-hover project-card bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200 shadow-sm"
+     data-nom="<?= htmlspecialchars(strtolower($row['nom_projet']), ENT_QUOTES) ?>"
+     data-desc="<?= htmlspecialchars(strtolower($row['description']), ENT_QUOTES) ?>"
+     data-statut="<?= htmlspecialchars(strtolower($row['statut']), ENT_QUOTES) ?>">
 
         <!-- EN-TÊTE CARTE -->
         <div class="flex items-start justify-between mb-4">
@@ -168,6 +182,7 @@ $data = $p->getAll();
       <?php } ?>
 
     </div>
+    
 
   </main>
 
@@ -219,6 +234,28 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!valid) e.preventDefault();
     });
   });
+
+  let searchInput = document.getElementById("searchInput");
+
+  if (searchInput) {
+    searchInput.addEventListener("keyup", function () {
+      let value = this.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      let cards = document.querySelectorAll(".project-card");
+
+      cards.forEach(card => {
+        let nom    = (card.getAttribute("data-nom")    || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        let desc   = (card.getAttribute("data-desc")   || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        let statut = (card.getAttribute("data-statut") || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        if (nom.includes(value) || desc.includes(value) || statut.includes(value)) {
+          card.style.display = "";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    });
+  }
 });
 </script>
 </body>

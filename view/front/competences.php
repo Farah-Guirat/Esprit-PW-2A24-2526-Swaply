@@ -88,13 +88,25 @@ $data = $c->getAll();
     </div>
 
     <!-- LISTE DES COMPETENCES -->
+    <!-- RECHERCHE -->
+    <div class="mb-6">
+      <input 
+        type="text" 
+        id="searchInput"
+        placeholder="🔍 Rechercher une compétence (nom, niveau)..."
+        class="w-full px-4 py-3 rounded-2xl border border-gray-200 focus:outline-none focus:border-teal-400 text-sm"
+      >
+    </div>
+
     <h3 class="text-xl font-semibold text-gray-800 mb-6">Toutes les compétences</h3>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
       <?php foreach($data as $row) { ?>
 
-      <div class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200 shadow-sm">
+      <div class="card-hover competence-card bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200 shadow-sm"
+        data-nom="<?= htmlspecialchars(strtolower($row['nom_competence']), ENT_QUOTES) ?>"
+        data-niveau="<?= htmlspecialchars(strtolower($row['niveau']), ENT_QUOTES) ?>">
 
         <!-- EN-TÊTE -->
         <div class="flex items-start justify-between mb-4">
@@ -190,6 +202,27 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!valid) e.preventDefault();
     });
   });
+
+  let searchInput = document.getElementById("searchInput");
+
+  if (searchInput) {
+    searchInput.addEventListener("keyup", function () {
+      let value = this.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      let cards = document.querySelectorAll(".competence-card");
+
+      cards.forEach(card => {
+        let nom    = (card.getAttribute("data-nom")    || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        let niveau = (card.getAttribute("data-niveau") || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        if (nom.includes(value) || niveau.includes(value)) {
+          card.style.display = "";
+        } else {
+          card.style.display = "none";
+        }
+      });
+    });
+  }
 });
 </script>
 

@@ -3,6 +3,25 @@ require_once "../../model/projet.php";
  
 $p = new Projet();
 $data = $p->getAll();
+$statsStatut = $p->getStatistiquesStatut();
+$statsDate = $p->getStatistiquesDate();
+
+
+if (isset($_GET['sort'])) {
+
+  if ($_GET['sort'] == 'alpha') {
+    usort($data, function($a, $b) {
+      return strcmp($a['nom_projet'], $b['nom_projet']);
+    });
+  }
+
+  if ($_GET['sort'] == 'recent') {
+    usort($data, function($a, $b) {
+      return strtotime($b['date_creation']) - strtotime($a['date_creation']);
+    });
+  }
+
+}
 ?>
  
 <!DOCTYPE html>
@@ -67,7 +86,7 @@ $data = $p->getAll();
       <div class="header-right">
         <div class="search-box">
           <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" placeholder="Rechercher...">
+          <input type="text" id="searchInput" placeholder="Rechercher...">
         </div>
  
         <div class="notifications">
@@ -88,7 +107,54 @@ $data = $p->getAll();
     <!-- PAGE CONTENT -->
     <div class="page-content" id="main-content">
  
-      <h1>Administration des projets</h1>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+    <h1>Administration des projets</h1>
+
+    <a href="export_projets.php" target="_blank" 
+     style="padding:10px 15px;background:#009688;color:white;border-radius:8px;text-decoration:none;">
+     📄 Export PDF
+    </a>
+
+    <div style="margin-bottom:15px;">
+  <form method="GET">
+    <select name="sort" onchange="this.form.submit()"
+      style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;">
+      
+      <option value="">-- Trier par --</option>
+      <option value="alpha" <?= (isset($_GET['sort']) && $_GET['sort']=='alpha') ? 'selected' : '' ?>>
+        🔤 Nom (A → Z)
+      </option>
+
+      <option value="recent" <?= (isset($_GET['sort']) && $_GET['sort']=='recent') ? 'selected' : '' ?>>
+        🆕 Plus récents
+      </option>
+
+    </select>
+  </form>
+</div>
+
+    </div>
+    <div class="stats-container">
+
+  <h2>📊 Statistiques des projets</h2>
+
+  <!-- STATUT -->
+  <div>
+    <h3>Par statut</h3>
+    <?php foreach ($statsStatut as $s) { ?>
+      <p><?= $s['statut'] ?> : <?= $s['total'] ?></p>
+    <?php } ?>
+  </div>
+
+  <!-- DATE -->
+  <div>
+    <h3>Par mois</h3>
+    <?php foreach ($statsDate as $d) { ?>
+      <p><?= $d['mois'] ?> : <?= $d['total'] ?></p>
+    <?php } ?>
+  </div>
+
+</div>
  
       <!-- TABLE DES PROJETS -->
       <table border="1">
@@ -102,7 +168,7 @@ $data = $p->getAll();
         </tr>
  
         <?php foreach($data as $row) { ?>
-        <tr>
+        <tr class="project-row">
           <td><?= $row['id_projet'] ?></td>
           <td><?= $row['nom_projet'] ?></td>
           <td><?= $row['description'] ?></td>
@@ -117,7 +183,6 @@ $data = $p->getAll();
             <?php } ?>
           </td>
           <td>
-            <!-- DELETE -->
             <a href="../../controller/ProjetController.php?delete=<?= $row['id_projet'] ?>"
                onclick="return confirm('Voulez-vous supprimer ce projet ?')">
                🗑 Supprimer
@@ -128,10 +193,40 @@ $data = $p->getAll();
  
       </table>
  
-    </div><!-- end page-content -->
-  </div><!-- end main-content -->
-</div><!-- end flex -->
+    </div>
+  </div>
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  let searchInput = document.getElementById("searchInput");
+
+  if (searchInput) {
+    searchInput.addEventListener("input", function () {
+
+      let value = this.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+      let rows = document.querySelectorAll(".project-row");
+
+      rows.forEach(row => {
+
+        let text = row.textContent.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        if (text.includes(value)) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+
+      });
+
+    });
+  }
+
+});
+</script>
  
 </body>
 </html>
- 

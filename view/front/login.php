@@ -291,7 +291,7 @@ function validateLogin() {
     return true;
 }
 
-// 👉 HEDHI JDIIDA (important)
+
 window.onload = function() {
     let params = new URLSearchParams(window.location.search);
     let errorMsg = document.getElementById("error-msg");

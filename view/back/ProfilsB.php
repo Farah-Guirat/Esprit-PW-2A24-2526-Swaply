@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 require_once __DIR__ . "/../../config/Database.php";
 require_once __DIR__ . "/../../model/User.php";
@@ -15,118 +15,48 @@ $adminEmail = 'klai.aziz@admin.tn';
 $searchTerm = isset($_GET['q']) ? trim($_GET['q']) : '';
 $users = $userModel->getAllUsersExceptAdmin($adminEmail, $searchTerm);
 $activeProfiles = $userModel->countUsersExceptAdmin($adminEmail, $searchTerm);
+$genderStats = $userModel->getGenderStats($adminEmail, $searchTerm);
+
+$genderData = [];
+$total = 0;
+foreach ($genderStats as $stat) {
+    $total += $stat['count'];
+}
+$startAngle = 0;
+foreach ($genderStats as $stat) {
+    $percentage = $total > 0 ? ($stat['count'] / $total) * 100 : 0;
+    $endAngle = $startAngle + ($percentage / 100) * 360;
+    $genreLower = strtolower($stat['genre']);
+    $color = $genreLower == 'homme' || $genreLower == 'male' ? '#3b82f6' : '#ec4899';
+    $genderData[] = [
+        'genre' => $stat['genre'],
+        'percentage' => round($percentage, 1),
+        'color' => $color,
+        'start' => $startAngle,
+        'end' => $endAngle
+    ];
+    $startAngle = $endAngle;
+}
+
+$genderDisplay = '';
+foreach ($genderData as $data) {
+    $genreLower = strtolower($data['genre']);
+    $g = ($genreLower == 'homme' || $genreLower == 'male') ? 'H' : 'F';
+    $genderDisplay .= $g . ': ' . $data['percentage'] . '%, ';
+}
+$genderDisplay = rtrim($genderDisplay, ', ');
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Swaply – Profils</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>Back Office - Profils</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --teal: #2baa8f;
-    --teal-dark: #1f8a73;
-    --teal-light: #e8f7f4;
-    --teal-mid: #d0f0ea;
-    --text: #1a1a2e;
-    --muted: #6b7280;
-    --border: #e5e7eb;
-    --white: #ffffff;
-    --bg: #f9fafb;
-  }
-
-  body {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
-
-  /* NAV */
-  nav {
-    background: var(--white);
-    border-bottom: 1px solid var(--border);
-    padding: 0 40px;
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.05);
-  }
-
-  .nav-logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 800;
-    font-size: 1.25rem;
-    color: var(--text);
-    text-decoration: none;
-  }
-
-  .logo-icon {
-    width: 36px; height: 36px;
-    background: var(--teal);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    color: white;
-    font-weight: 800;
-    font-size: 1rem;
-  }
-
-  .nav-links {
-    display: flex;
-    gap: 32px;
-    list-style: none;
-  }
-
-  .nav-links a {
-    text-decoration: none;
-    color: var(--muted);
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: color .2s;
-  }
-
-  .nav-links a:hover, .nav-links a.active {
-    color: var(--teal);
-    font-weight: 700;
-  }
-
-  .nav-links a.active {
-    position: relative;
-  }
-
-  .nav-links a.active::after {
-    content: '';
-    position: absolute;
-    bottom: -22px;
-    left: 0; right: 0;
-    height: 2px;
-    background: var(--teal);
-    border-radius: 2px;
-  }
-
-  .nav-avatar {
-    width: 38px; height: 38px;
-    border-radius: 50%;
-    background: #ccc;
-    overflow: hidden;
-    cursor: pointer;
-    border: 2px solid var(--teal-mid);
-  }
-
-  .nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-  /* PAGE HEADER */
-  .page-header {
-    padding: 36px 40px 24px;
+  .profile-page-header {
+    padding: 36px 30px 24px;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
@@ -134,158 +64,140 @@ $activeProfiles = $userModel->countUsersExceptAdmin($adminEmail, $searchTerm);
     gap: 16px;
   }
 
-  .page-header h1 {
+  .profile-page-header h1 {
     font-size: 1.8rem;
     font-weight: 800;
-    color: var(--text);
+    color: #0f766e;
   }
 
-  .page-header p {
-    color: var(--muted);
+  .profile-page-header p {
+    color: #64748b;
     font-size: 0.9rem;
     margin-top: 4px;
+    max-width: 720px;
   }
 
-  /* FILTERS BAR */
-  .filters-bar {
-    padding: 0 40px 24px;
+  .profile-stats-row {
+    display: flex;
+    gap: 16px;
+    padding: 0 30px 28px;
+    flex-wrap: wrap;
+  }
+
+  .profile-filter-chip,
+  .profile-sort-select,
+  .profile-search-box {
+    font-family: inherit;
+  }
+
+  .profile-search-box {
+    flex: 1;
+    min-width: 240px;
+    max-width: 420px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f1f5f9;
+    border-radius: 9999px;
+    padding: 10px 16px;
+  }
+
+  .profile-search-box svg {
+    color: #64748b;
+    min-width: 18px;
+  }
+
+  .profile-search-box input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.95rem;
+    color: #0f172a;
+  }
+
+  .profile-search-box button {
+    border: none;
+    background: #14b8a6;
+    color: white;
+    border-radius: 9999px;
+    padding: 10px 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .profile-search-box button:hover {
+    background: #0f766e;
+  }
+
+  .profile-filters-bar {
+    padding: 0 30px 24px;
     display: flex;
     gap: 12px;
     align-items: center;
     flex-wrap: wrap;
   }
 
-  .search-box {
-    flex: 1;
-    min-width: 240px;
-    max-width: 360px;
-    position: relative;
-  }
-
-  .search-box {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .search-box input {
-    width: 100%;
-    padding: 10px 16px 10px 42px;
-    border: 1.5px solid var(--border);
-    border-radius: 50px;
-    font-family: inherit;
-    font-size: 0.875rem;
-    background: white;
-    outline: none;
-    transition: border .2s;
-    color: var(--text);
-  }
-
-  .search-box input:focus { border-color: var(--teal); }
-
-  .search-box svg {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--muted);
-  }
-
-  .search-btn {
-    padding: 10px 18px;
-    border-radius: 50px;
-    border: 1.5px solid var(--teal);
-    background: var(--teal);
-    color: white;
-    font-family: inherit;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: background .2s, border .2s;
-  }
-
-  .search-btn:hover {
-    background: #1f8a73;
-    border-color: #1f8a73;
-  }
-
-  .search-message {
-    font-size: 0.95rem;
-    color: var(--muted);
-    padding: 0 40px 18px;
-  }
-
-  .filter-chip {
+  .profile-filter-chip {
     padding: 8px 18px;
     border-radius: 50px;
-    border: 1.5px solid var(--border);
+    border: 1.5px solid #e5e7eb;
     background: white;
-    font-family: inherit;
+    color: #64748b;
     font-size: 0.825rem;
     font-weight: 600;
-    color: var(--muted);
     cursor: pointer;
     transition: all .2s;
   }
 
-  .filter-chip:hover { border-color: var(--teal); color: var(--teal); }
-  .filter-chip.active { background: var(--teal); border-color: var(--teal); color: white; }
-
-  .sort-select {
-    padding: 9px 16px;
-    border-radius: 50px;
-    border: 1.5px solid var(--border);
-    background: white;
-    font-family: inherit;
-    font-size: 0.825rem;
-    font-weight: 600;
-    color: var(--muted);
-    cursor: pointer;
-    outline: none;
-    margin-left: auto;
+  .profile-filter-chip:hover {
+    border-color: #14b8a6;
+    color: #14b8a6;
   }
 
-  /* GRID */
+  .profile-filter-chip.active {
+    background: #14b8a6;
+    border-color: #14b8a6;
+    color: white;
+  }
+
+  .profile-sort-select {
+    margin-left: auto;
+    padding: 9px 16px;
+    border-radius: 50px;
+    border: 1.5px solid #e5e7eb;
+    background: white;
+    color: #475569;
+    cursor: pointer;
+    font-size: 0.825rem;
+    font-weight: 600;
+  }
+
   .profiles-grid {
-    padding: 0 40px 60px;
+    padding: 0 30px 60px;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
   }
 
-  /* CARD */
   .profile-card {
     background: white;
     border-radius: 20px;
-    border: 1.5px solid var(--border);
+    border: 1.5px solid #e5e7eb;
     overflow: hidden;
     transition: transform .25s, box-shadow .25s;
     cursor: pointer;
-    animation: fadeUp .4s ease both;
   }
 
   .profile-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 36px rgba(43,170,143,.12);
-    border-color: var(--teal-mid);
+    border-color: #d0f0ea;
   }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .profile-card:nth-child(1) { animation-delay: .05s; }
-  .profile-card:nth-child(2) { animation-delay: .10s; }
-  .profile-card:nth-child(3) { animation-delay: .15s; }
-  .profile-card:nth-child(4) { animation-delay: .20s; }
-  .profile-card:nth-child(5) { animation-delay: .25s; }
-  .profile-card:nth-child(6) { animation-delay: .30s; }
-  .profile-card:nth-child(7) { animation-delay: .35s; }
-  .profile-card:nth-child(8) { animation-delay: .40s; }
-
-  .card-banner {
-    height: 72px;
-  }
+  .card-banner { height: 72px; }
 
   .card-body {
     padding: 0 20px 20px;
@@ -309,7 +221,7 @@ $activeProfiles = $userModel->countUsersExceptAdmin($adminEmail, $searchTerm);
     position: absolute;
     top: -16px;
     right: 20px;
-    background: var(--teal);
+    background: #14b8a6;
     color: white;
     font-size: 0.7rem;
     font-weight: 700;
@@ -321,20 +233,20 @@ $activeProfiles = $userModel->countUsersExceptAdmin($adminEmail, $searchTerm);
   .card-name {
     font-size: 1rem;
     font-weight: 800;
-    color: var(--text);
+    color: #0f172a;
     margin-bottom: 2px;
   }
 
   .card-role {
     font-size: 0.8rem;
-    color: var(--teal-dark);
+    color: #1f8a73;
     font-weight: 600;
     margin-bottom: 8px;
   }
 
   .card-location {
     font-size: 0.775rem;
-    color: var(--muted);
+    color: #64748b;
     display: flex;
     align-items: center;
     gap: 4px;
@@ -349,8 +261,8 @@ $activeProfiles = $userModel->countUsersExceptAdmin($adminEmail, $searchTerm);
   }
 
   .skill-tag {
-    background: var(--teal-light);
-    color: var(--teal-dark);
+    background: #d0f0ea;
+    color: #1f8a73;
     font-size: 0.72rem;
     font-weight: 700;
     padding: 4px 10px;
@@ -362,7 +274,7 @@ $activeProfiles = $userModel->countUsersExceptAdmin($adminEmail, $searchTerm);
     align-items: center;
     justify-content: space-between;
     padding-top: 14px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid #e5e7eb;
   }
 
   .card-rating {
@@ -371,13 +283,13 @@ $activeProfiles = $userModel->countUsersExceptAdmin($adminEmail, $searchTerm);
     gap: 4px;
     font-size: 0.8rem;
     font-weight: 700;
-    color: var(--text);
+    color: #0f172a;
   }
 
   .star { color: #f59e0b; }
 
   .card-btn {
-    background: var(--teal);
+    background: #14b8a6;
     color: white;
     border: none;
     padding: 7px 16px;
@@ -386,182 +298,220 @@ $activeProfiles = $userModel->countUsersExceptAdmin($adminEmail, $searchTerm);
     font-size: 0.78rem;
     font-weight: 700;
     cursor: pointer;
+    text-decoration: none;
     transition: background .2s;
   }
 
-  .card-btn:hover { background: var(--teal-dark); }
+  .card-btn:hover { background: #0f766e; }
 
-  /* Stats row */
-  .stats-row {
-    display: flex;
-    gap: 16px;
-    padding: 0 40px 28px;
+  .search-message {
+    font-size: 0.95rem;
+    color: #64748b;
+    padding: 0 30px 18px;
   }
 
-  .stat-pill {
-    background: white;
-    border: 1.5px solid var(--border);
-    border-radius: 16px;
-    padding: 14px 22px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  @media (max-width: 900px) {
+    .profile-page-header,
+    .profile-filters-bar,
+    .profile-stats-row {
+      padding-left: 20px;
+      padding-right: 20px;
+    }
 
-  .stat-icon {
-    width: 40px; height: 40px;
-    border-radius: 12px;
-    background: var(--teal-light);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem;
-  }
-
-  .stat-num {
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: var(--text);
-  }
-
-  .stat-label {
-    font-size: 0.75rem;
-    color: var(--muted);
-    font-weight: 500;
+    .profile-search-box { max-width: 100%; }
+    .profile-sort-select { margin-left: 0; width: 100%; }
+    .profile-filter-chip { flex: 1 1 auto; }
   }
 </style>
 </head>
 <body>
-
-<!-- NAV -->
-<nav>
-  <a class="nav-logo" href="swaplyB.php">
-    <div class="logo-icon">S</div>
-    Swaply
-  </a>
-  <ul class="nav-links">
-      <li><a href="swaplyB.php">Accueil</a></li>
-    <li><a href="#" class="active">Profils</a></li>
-    <li><a href="#">Projets</a></li>
-    <li><a href="#">Offres</a></li>
-    <li><a href="#">Demandes</a></li>
-    <li><a href="#">Publications</a></li>
-    <li><a href="#">Messages</a></li>
-    <li><a href="#">Réclamations</a></li>
-  </ul>
-  <div class="nav-avatar">
-    <svg viewBox="0 0 36 36" fill="#888" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="18" cy="13" r="7" fill="#aaa"/>
-      <path d="M4 30c0-7.7 6.3-14 14-14s14 6.3 14 14" fill="#ccc"/>
-    </svg>
-  </div>
-</nav>
-
-<!-- PAGE HEADER -->
-<div class="page-header">
-  <div>
-    <h1>Explorer les profils</h1>
-    <p>Découvrez des talents et des experts prêts à collaborer</p>
-  </div>
-</div>
-
-<!-- STATS -->
-<div class="stats-row">
-  <div class="stat-pill">
-    <div class="stat-icon">👥</div>
-    <div>
-      <div class="stat-num"><?= number_format($activeProfiles, 0, '.', ' ') ?></div>
-      <div class="stat-label">Profils actifs</div>
+<div class="flex h-screen overflow-hidden">
+  <div class="sidebar">
+    <div class="logo">
+      <span class="icon">📋</span>
+      <h1>JobBoard Admin</h1>
+    </div>
+    <div class="menu">
+      <a href="swaplyB.php" class="menu-item" id="menu-dashboard">
+        <i class="fa-solid fa-house"></i> Dashboard
+      </a>
+      <a href="#" class="menu-item" id="menu-users">
+        <i class="fa-solid fa-users"></i> Utilisateurs
+      </a>
+      <a href="ProfilsB.php" class="menu-item active" id="menu-profiles">
+        <i class="fa-solid fa-user"></i> Profils
+      </a>
+      <a href="#" class="menu-item" id="menu-offres">
+        <i class="fa-solid fa-briefcase"></i> Offres & Demandes
+      </a>
+      <a href="#" class="menu-item" id="menu-publications">
+        <i class="fa-solid fa-newspaper"></i> Publications
+      </a>
+      <a href="#" class="menu-item" id="menu-conversations">
+        <i class="fa-solid fa-comment-dots"></i> Conversations
+      </a>
+      <a href="#" class="menu-item" id="menu-reclamations">
+        <i class="fa-solid fa-exclamation-triangle"></i> Réclamations
+      </a>
+      <a href="#" class="menu-item" id="menu-stats">
+        <i class="fa-solid fa-chart-bar"></i> Statistiques
+      </a>
+      <a href="#" class="menu-item" id="menu-settings">
+        <i class="fa-solid fa-gear"></i> Paramètres
+      </a>
     </div>
   </div>
-  <div class="stat-pill">
-    <div class="stat-icon">🌍</div>
-    <div>
-      <div class="stat-num">38</div>
-      <div class="stat-label">Pays représentés</div>
-    </div>
-  </div>
-  <div class="stat-pill">
-    <div class="stat-icon">⭐</div>
-    <div>
-      <div class="stat-num">4.8</div>
-      <div class="stat-label">Note moyenne</div>
-    </div>
-  </div>
-</div>
-
-<!-- FILTERS -->
-<div class="filters-bar">
-  <form method="get" action="ProfilsB.php" class="search-box">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-    </svg>
-    <input type="text" name="q" placeholder="Rechercher un profil, compétence…" value="<?= htmlspecialchars($searchTerm) ?>">
-    <button type="submit" class="search-btn">Rechercher</button>
-  </form>
-  <button class="filter-chip active">Tous</button>
-  <button class="filter-chip">Développeurs</button>
-  <button class="filter-chip">Designers</button>
-  <button class="filter-chip">Marketing</button>
-  <button class="filter-chip">Finance</button>
-  <select class="sort-select">
-    <option>Trier : Plus récent</option>
-    <option>Trier : Mieux notés</option>
-    <option>Trier : Alphabétique</option>
-  </select>
-</div>
-
-<div id="search-message" class="search-message" style="display:none;"></div>
-
-<?php if ($searchTerm !== '' && empty($users)): ?>
-  <div style="padding: 0 40px 20px; color: var(--muted);">Aucun profil trouvé pour « <?= htmlspecialchars($searchTerm) ?> ».</div>
-<?php endif; ?>
-
-<!-- GRID -->
-<div class="profiles-grid">
-  <?php if (empty($users)): ?>
-    <div class="profile-card">
-      <div class="card-body">
-        <div class="card-name">Aucun profil disponible</div>
-        <p style="color: var(--muted);">Aucun utilisateur n'est enregistré pour le moment.</p>
-      </div>
-    </div>
-  <?php else: ?>
-    <?php foreach ($users as $profile): ?>
-      <?php
-        $initials = strtoupper(mb_substr($profile['nom'], 0, 1) . mb_substr($profile['prenom'], 0, 1));
-        $displayName = htmlspecialchars($profile['nom'] . ' ' . $profile['prenom']);
-        $searchText = htmlspecialchars(mb_strtolower($profile['nom'] . ' ' . $profile['prenom'] . ' ' . $profile['email']));
-      ?>
-      <div class="profile-card" data-search="<?= $searchText ?>">
-        <div class="card-banner" style="background: linear-gradient(135deg,#2baa8f,#1f6f5c);"></div>
-        <div class="card-body">
-          <div class="card-badge">✔ Vérifié</div>
-          <div class="card-avatar" style="background: #2baa8f;"><?= $initials ?></div>
-          <div class="card-name"><?= $displayName ?></div>
-          <div class="card-role">Utilisateur inscrit</div>
-          <div class="card-location">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Tunisia
-          </div>
-          <div class="card-skills">
-            <span class="skill-tag">Profil enregistré</span>
-          </div>
-          <div class="card-footer">
-            <div class="card-rating"><span class="star">★</span> 4.8 <span style="color:var(--muted);font-weight:400">(n/a)</span></div>
-            <a class="card-btn" href="AfficheP.php?id=<?= urlencode($profile['id_u']) ?>">Voir profil</a>
+  <div class="main-content">
+    <header class="header">
+      <h2 id="page-title">Profils</h2>
+      <div class="header-right">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Rechercher...">
+        </div>
+        <div class="notifications">
+          <i class="fa-solid fa-bell"></i>
+          <span class="badge">7</span>
+        </div>
+        <div class="user">
+          <img src="https://i.pravatar.cc/40?img=12" alt="Admin">
+          <div>
+            <p class="name">Admin</p>
+            <p class="role">Super Admin</p>
           </div>
         </div>
+        <a href="../../controller/logout.php" class="logout-btn" onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?');">
+          <i class="fa-solid fa-sign-out-alt"></i> Déconnexion
+        </a>
       </div>
-    <?php endforeach; ?>
-  <?php endif; ?>
+    </header>
+    <div class="page-content">
+      <div class="profile-page">
+        <div class="profile-page-header">
+          <div>
+            <h1>Explorer les profils</h1>
+            <p>Découvrez des talents et des experts prêts à collaborer.</p>
+          </div>
+        </div>
+        <div class="profile-stats-row">
+          <div class="stat-pill">
+            <div class="stat-icon">👥</div>
+            <div>
+              <div class="stat-num"><?= number_format($activeProfiles, 0, '.', ' ') ?></div>
+              <div class="stat-label">Profils actifs</div>
+            </div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-icon">🌍</div>
+            <div>
+              <div class="stat-num">38</div>
+              <div class="stat-label">Pays représentés</div>
+            </div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-icon">⭐</div>
+            <div>
+              <div class="stat-num">4.8</div>
+              <div class="stat-label">Note moyenne</div>
+            </div>
+          </div>
+          <div class="stat-pill">
+            <div class="stat-icon">👫</div>
+            <div>
+              <div class="stat-num" style="width: 100px; height: 20px; background: #e5e7eb; border-radius: 10px; overflow: hidden; margin: 0 auto;">
+                <?php foreach ($genderData as $data): ?>
+                  <span style="display: inline-block; height: 100%; width: <?=$data['percentage']?>%; background: <?=$data['color']?>;"></span>
+                <?php endforeach; ?>
+              </div>
+              <div class="stat-label"><?=$genderDisplay?></div>
+            </div>
+          </div>
+        </div>
+        <div style="padding: 0 30px 20px;">
+          <a href="export_pdf.php" class="card-btn" style="text-decoration: none;">Exporter PDF</a>
+        </div>
+        <div class="profile-filters-bar">
+          <form method="get" action="ProfilsB.php" class="profile-search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" name="q" placeholder="Rechercher un profil, compétence…" value="<?= htmlspecialchars($searchTerm) ?>">
+            <button type="submit">Rechercher</button>
+          </form>
+          <button type="button" class="profile-filter-chip active">Tous</button>
+          <button type="button" class="profile-filter-chip">Développeurs</button>
+          <button type="button" class="profile-filter-chip">Designers</button>
+          <button type="button" class="profile-filter-chip">Marketing</button>
+          <button type="button" class="profile-filter-chip">Finance</button>
+          <select class="profile-sort-select">
+            <option>Trier : Plus récent</option>
+            <option>Trier : Alphabétique</option>
+          </select>
+        </div>
+        <div id="search-message" class="search-message" style="display:none;"></div>
+        <?php if ($searchTerm !== '' && empty($users)): ?>
+          <div style="padding: 0 30px 20px; color: #64748b;">Aucun profil trouvé pour « <?= htmlspecialchars($searchTerm) ?> ».</div>
+        <?php endif; ?>
+        <div class="profiles-grid">
+          <?php if (empty($users)): ?>
+            <div class="profile-card">
+              <div class="card-body">
+                <div class="card-name">Aucun profil disponible</div>
+                <p style="color: #64748b;">Aucun utilisateur n'est enregistré pour le moment.</p>
+              </div>
+            </div>
+          <?php else: ?>
+            <?php foreach ($users as $profile): ?>
+              <?php
+                $initials = strtoupper(mb_substr($profile['nom'], 0, 1) . mb_substr($profile['prenom'], 0, 1));
+                $displayName = htmlspecialchars($profile['nom'] . ' ' . $profile['prenom']);
+                $searchText = htmlspecialchars(mb_strtolower($profile['nom'] . ' ' . $profile['prenom'] . ' ' . $profile['email']));
+                $photo = $profile['photo'] ?? null;
+                $isBanned = isset($profile['banned']) && $profile['banned'];
+                $status = $isBanned ? 'Inactif' : 'Actif';
+                $statusColor = $isBanned ? '#64748b' : '#14b8a6';
+              ?>
+              <div class="profile-card" data-search="<?= $searchText ?>" data-id="<?= $profile['id_u'] ?>" data-name="<?= htmlspecialchars($profile['nom'] . ' ' . $profile['prenom']) ?>">
+                <div class="card-banner" style="background: linear-gradient(135deg,#2baa8f,#1f6f5c);"></div>
+                <div class="card-body">
+                  <div class="card-badge" style="background: <?= $statusColor ?>; color: white;"><?= $status ?></div>
+                  <div class="card-avatar" style="background: #2baa8f;">
+                    <?php if ($photo): ?>
+                      <img src="../../uploads/profiles/<?= htmlspecialchars($photo) ?>" alt="Photo" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">
+                    <?php else: ?>
+                      <?= $initials ?>
+                    <?php endif; ?>
+                  </div>
+                  <div class="card-name"><?= $displayName ?></div>
+                  <div class="card-role">Utilisateur inscrit</div>
+                  <div class="card-location">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" xmlns="http://www.w3.org/2000/svg"><path d="M21 10c0 6-9 13-9 13S3 16 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Tunisia
+                  </div>
+                  <div class="card-skills">
+                    <span class="skill-tag">Profil enregistré</span>
+                  </div>
+                  <div class="card-footer">
+                    <div class="card-rating"><span class="star">★</span> 4.8 <span style="color:#64748b;font-weight:400">(n/a)</span></div>
+                    <a class="card-btn" href="AfficheP.php?id=<?= urlencode($profile['id_u']) ?>">Voir profil</a>
+                  </div>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-
 <script>
-  const searchInput = document.querySelector('.search-box input[name="q"]');
+  const winSearchInput = document.querySelector('.profile-search-box input[name="q"]');
   const profileCards = Array.from(document.querySelectorAll('.profile-card'));
   const searchMessage = document.getElementById('search-message');
 
   function filterProfiles() {
-    const query = searchInput.value.trim().toLowerCase();
+    const query = winSearchInput.value.trim().toLowerCase();
     let visibleCount = 0;
 
     profileCards.forEach(card => {
@@ -572,25 +522,38 @@ $activeProfiles = $userModel->countUsersExceptAdmin($adminEmail, $searchTerm);
     });
 
     if (query !== '' && visibleCount === 0) {
-      searchMessage.textContent = `Aucun profil trouvé pour « ${searchInput.value} ».`;
+      searchMessage.textContent = `Aucun profil trouvé pour « ${winSearchInput.value} ».`;
       searchMessage.style.display = 'block';
     } else {
       searchMessage.style.display = 'none';
     }
   }
 
-  if (searchInput) {
-    searchInput.addEventListener('input', filterProfiles);
-    if (searchInput.value.trim() !== '') {
+  if (winSearchInput) {
+    winSearchInput.addEventListener('input', filterProfiles);
+    if (winSearchInput.value.trim() !== '') {
       filterProfiles();
     }
   }
 
-  document.querySelectorAll('.filter-chip').forEach(btn => {
+  document.querySelectorAll('.profile-filter-chip').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.profile-filter-chip').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     });
+  });
+
+  const sortSelect = document.querySelector('.profile-sort-select');
+  sortSelect.addEventListener('change', () => {
+    const value = sortSelect.value;
+    const grid = document.querySelector('.profiles-grid');
+    const cards = Array.from(grid.querySelectorAll('.profile-card'));
+    if (value === 'Trier : Plus récent') {
+      cards.sort((a, b) => parseInt(b.dataset.id) - parseInt(a.dataset.id));
+    } else if (value === 'Trier : Alphabétique') {
+      cards.sort((a, b) => a.dataset.name.localeCompare(b.dataset.name));
+    }
+    cards.forEach(card => grid.appendChild(card));
   });
 </script>
 </body>

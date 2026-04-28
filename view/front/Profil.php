@@ -444,6 +444,148 @@ $user = $userModel->getUserById($id);
     transition: all .2s;
   }
   .logout-btn:hover { background: var(--danger); color: white; border-color: var(--danger); }
+
+  /* ── PHOTO MENU ── */
+  .hidden { display: none !important; }
+  .cursor-pointer { cursor: pointer; }
+  .relative { position: relative; }
+  .absolute { position: absolute; }
+  .top-full { top: 100%; }
+  .left-0 { left: 0; }
+  .z-50 { z-index: 50; }
+  
+  #photo-menu {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+    padding: 8px;
+    margin-top: 8px;
+    min-width: 180px;
+  }
+  
+  #photo-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 16px;
+    font-size: .85rem;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background .2s;
+  }
+  
+  #photo-menu button:hover {
+    background: var(--teal-light);
+  }
+  
+  #photo-menu button.delete:hover {
+    background: #fee2e2;
+    color: var(--danger);
+  }
+  
+  .avatar-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    display: block;
+  }
+
+  /* Styles pour la caméra */
+  #camera-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: none;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  #camera-modal.active {
+    display: flex;
+  }
+
+  #camera-modal video {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  #camera-modal canvas {
+    display: none;
+  }
+
+  #camera-modal #preview-image {
+    max-width: 500px;
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: none;
+  }
+
+  .camera-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .camera-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 120px;
+  }
+
+  .camera-btn.primary {
+    background: var(--teal);
+    color: white;
+  }
+
+  .camera-btn.primary:hover {
+    background: var(--teal-dark);
+  }
+
+  .camera-btn.secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .camera-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  .camera-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .camera-title {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
@@ -471,7 +613,13 @@ $user = $userModel->getUserById($id);
       </svg>
       <div class="notif-dot"></div>
     </div>
-    <div class="nav-avatar"><?= htmlspecialchars(mb_strtoupper(mb_substr($user['nom'], 0, 1) . mb_substr($user['prenom'], 0, 1))); ?></div>
+    <?php if (!empty($user['photo'])): ?>
+      <div class="nav-avatar" style="background: transparent; overflow: hidden; padding: 0;">
+        <img src="../../uploads/profiles/<?= htmlspecialchars($user['photo']) ?>" alt="Profil" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+      </div>
+    <?php else: ?>
+      <div class="nav-avatar"><?= htmlspecialchars(mb_strtoupper(mb_substr($user['nom'], 0, 1) . mb_substr($user['prenom'], 0, 1))); ?></div>
+    <?php endif; ?>
     <button class="logout-btn" onclick="return confirmLogout()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
         <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
@@ -491,13 +639,24 @@ $user = $userModel->getUserById($id);
     <div class="profile-card">
       <div class="profile-banner"></div>
       <div class="avatar-wrap">
-        <div class="avatar-circle">
-          <?= htmlspecialchars(mb_strtoupper(mb_substr($user['nom'], 0, 1) . mb_substr($user['prenom'], 0, 1))); ?>
+        <div class="avatar-circle cursor-pointer relative" onclick="togglePhotoMenu(event)">
+          <?php if (!empty($user['photo'])): ?>
+            <img src="../../uploads/profiles/<?= htmlspecialchars($user['photo']) ?>" alt="Profil" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;">
+          <?php else: ?>
+            <?= htmlspecialchars(mb_strtoupper(mb_substr($user['nom'], 0, 1) . mb_substr($user['prenom'], 0, 1))); ?>
+          <?php endif; ?>
           <div class="avatar-edit">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
               <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
               <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
+          </div>
+          <div id="photo-menu" class="absolute top-full left-0 hidden z-50">
+            <button onclick="uploadFile(event)" style="color: var(--text);">Télécharger un fichier</button>
+            <button onclick="takePhoto(event)" style="color: var(--text);">Prendre une photo</button>
+            <?php if (!empty($user['photo'])): ?>
+              <button onclick="deletePhoto(event)" class="delete" style="color: var(--danger);">Supprimer la photo</button>
+            <?php endif; ?>
           </div>
         </div>
       </div>
@@ -752,7 +911,199 @@ $user = $userModel->getUserById($id);
   Modifications enregistrées avec succès
 </div>
 
+<input type="file" id="file-input" style="display:none;" accept="image/*">
+
+<!-- Modal Caméra -->
+<div id="camera-modal">
+  <div class="camera-title">📷 Prendre une photo</div>
+  <video id="camera-video" autoplay playsinline></video>
+  <canvas id="camera-canvas" style="display:none;"></canvas>
+  <img id="preview-image" src="" alt="Aperçu">
+  <div class="camera-controls">
+    <button class="camera-btn primary" id="capture-btn" onclick="capturePhoto()">Capturer</button>
+    <button class="camera-btn secondary" id="retake-btn" onclick="retakePhoto()" style="display:none;">Reprendre</button>
+    <button class="camera-btn secondary" id="send-btn" onclick="sendCapturedPhoto()" style="display:none;">Envoyer</button>
+    <button class="camera-btn secondary" onclick="closeCamera()">Annuler</button>
+  </div>
+</div>
+
 <script>
+  // Photo menu functions
+  function togglePhotoMenu(event) {
+    event.stopPropagation();
+    const menu = document.getElementById('photo-menu');
+    menu.classList.toggle('hidden');
+  }
+
+  function uploadFile(event) {
+    event.stopPropagation();
+    document.getElementById('file-input').click();
+  }
+
+  function takePhoto(event) {
+    event.stopPropagation();
+    openCamera();
+  }
+
+  // ────── Fonctions Caméra ──────
+  let cameraStream = null;
+  let capturedImageData = null;
+
+  function openCamera() {
+    const modal = document.getElementById('camera-modal');
+    const video = document.getElementById('camera-video');
+    
+    modal.classList.add('active');
+    
+    // Demander l'accès à la caméra
+    navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: 'user' },
+      audio: false 
+    })
+    .then(stream => {
+      cameraStream = stream;
+      video.srcObject = stream;
+    })
+    .catch(error => {
+      alert('Erreur d\'accès à la caméra: ' + error.message);
+      closeCamera();
+    });
+  }
+
+  function capturePhoto() {
+    const video = document.getElementById('camera-video');
+    const canvas = document.getElementById('camera-canvas');
+    const context = canvas.getContext('2d');
+    
+    // Définir les dimensions du canvas
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Dessiner l'image de la vidéo
+    context.drawImage(video, 0, 0);
+    
+    // Convertir en image
+    capturedImageData = canvas.toDataURL('image/jpeg');
+    
+    // Afficher l'aperçu
+    const previewImg = document.getElementById('preview-image');
+    previewImg.src = capturedImageData;
+    previewImg.style.display = 'block';
+    
+    // Masquer la vidéo
+    video.style.display = 'none';
+    
+    // Modifier les boutons
+    document.getElementById('capture-btn').style.display = 'none';
+    document.getElementById('retake-btn').style.display = 'inline-block';
+    document.getElementById('send-btn').style.display = 'inline-block';
+  }
+
+  function retakePhoto() {
+    const video = document.getElementById('camera-video');
+    const previewImg = document.getElementById('preview-image');
+    
+    video.style.display = 'block';
+    previewImg.style.display = 'none';
+    
+    document.getElementById('capture-btn').style.display = 'inline-block';
+    document.getElementById('retake-btn').style.display = 'none';
+    document.getElementById('send-btn').style.display = 'none';
+  }
+
+  function sendCapturedPhoto() {
+    if (!capturedImageData) {
+      alert('Veuillez d\'abord capturer une photo');
+      return;
+    }
+    
+    // Convertir data URL en Blob
+    const parts = capturedImageData.split(',');
+    const mimeMatch = parts[0].match(/:(.*?);/);
+    const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const bstr = atob(parts[1]);
+    const n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      u8arr[i] = bstr.charCodeAt(i);
+    }
+    const blob = new Blob([u8arr], { type: mimeType });
+    
+    const formData = new FormData();
+    formData.append('photo', blob, 'camera-photo.jpg');
+    formData.append('id', <?= $user['id_u'] ?>);
+    
+    fetch('../../controller/uploadPhoto.php', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.text())
+    .then(data => {
+      alert(data);
+      closeCamera();
+      location.reload();
+    })
+    .catch(error => {
+      alert('Erreur lors du téléchargement: ' + error.message);
+    });
+  }
+
+  function closeCamera() {
+    const modal = document.getElementById('camera-modal');
+    const video = document.getElementById('camera-video');
+    const previewImg = document.getElementById('preview-image');
+    
+    // Arrêter la caméra
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      cameraStream = null;
+    }
+    
+    // Réinitialiser
+    modal.classList.remove('active');
+    video.style.display = 'block';
+    previewImg.style.display = 'none';
+    capturedImageData = null;
+    
+    document.getElementById('capture-btn').style.display = 'inline-block';
+    document.getElementById('retake-btn').style.display = 'none';
+    document.getElementById('send-btn').style.display = 'none';
+  }
+
+  function deletePhoto(event) {
+    event.stopPropagation();
+    if (confirm('Supprimer la photo ?')) {
+      window.location.href = '../../controller/deletePhoto.php?id=<?= $user['id_u'] ?>';
+    }
+  }
+
+  document.getElementById('file-input').addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append('photo', file);
+      formData.append('id', <?= $user['id_u'] ?>);
+      fetch('../../controller/uploadPhoto.php', {
+        method: 'POST',
+        body: formData
+      }).then(response => response.text()).then(data => {
+        alert(data);
+        location.reload();
+      }).catch(error => {
+        alert('Erreur lors du téléchargement');
+      });
+    }
+  });
+
+  // Fermer le menu en cliquant ailleurs
+  document.addEventListener('click', function(e) {
+    const menu = document.getElementById('photo-menu');
+    const avatarCircle = document.querySelector('.avatar-circle');
+    if (menu && !menu.classList.contains('hidden') && !avatarCircle.contains(e.target)) {
+      menu.classList.add('hidden');
+    }
+  });
+
   function handleLogout() {
     if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
       alert('Déconnexion réussie. À bientôt !');

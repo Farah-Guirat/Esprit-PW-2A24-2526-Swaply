@@ -13,9 +13,9 @@ class User {
     public function register($nom, $prenom, $email, $password, $genre, $telephone, $date_naissance) {
 
         $sql = "INSERT INTO utilisateurs
-        (nom, prenom, email, password, genre, telephone, date_naissance)
+        (nom, prenom, email, password, genre, telephone, date_naissance, banned)
         VALUES 
-        (:nom, :prenom, :email, :password, :genre, :telephone, :date_naissance)";
+        (:nom, :prenom, :email, :password, :genre, :telephone, :date_naissance, 0)";
 
         $stmt = $this->conn->prepare($sql);
 
@@ -41,7 +41,7 @@ class User {
 
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($user && password_verify($password, $user['password'])) {
+        if ($user && password_verify($password, $user['password']) && (!isset($user['banned']) || $user['banned'] == 0)) {
             return $user;
         }
 
@@ -51,13 +51,13 @@ class User {
     public function getAllUsersExceptAdmin($adminEmail, $searchTerm = '')
     {
         if ($searchTerm === '') {
-            $sql = "SELECT id_u, nom, prenom, email, genre, telephone, date_naissance
+            $sql = "SELECT id_u, nom, prenom, email, genre, telephone, date_naissance, photo, banned
                     FROM utilisateurs
                     WHERE email != :adminEmail";
             $stmt = $this->conn->prepare($sql);
             $stmt->bindParam(':adminEmail', $adminEmail);
         } else {
-            $sql = "SELECT id_u, nom, prenom, email, genre, telephone, date_naissance
+            $sql = "SELECT id_u, nom, prenom, email, genre, telephone, date_naissance, photo, banned
                     FROM utilisateurs
                     WHERE email != :adminEmail
                     AND (nom LIKE :term OR prenom LIKE :term OR email LIKE :term)";
@@ -133,6 +133,20 @@ class User {
         return $stmt->execute([$nom, $prenom, $email, $telephone, $date_naissance, $id]);
     }
 
+    public function updatePhoto($id, $photo)
+    {
+        $sql = "UPDATE utilisateurs SET photo = ? WHERE id_u = ?";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute([$photo, $id]);
+    }
+
+    public function toggleBan($id)
+    {
+        $sql = "UPDATE utilisateurs SET banned = NOT banned WHERE id_u = :id";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
 
 public function deleteUser($id)
 {
@@ -154,6 +168,22 @@ public function deleteUser($id)
     }
 }
 
+    public function getGenderStats($adminEmail, $searchTerm = '')
+    {
+        $baseCondition = "WHERE email != :adminEmail";
+        $params = [':adminEmail' => $adminEmail];
+
+        if ($searchTerm !== '') {
+            $baseCondition .= " AND (nom LIKE :term OR prenom LIKE :term OR email LIKE :term)";
+            $params[':term'] = '%' . $searchTerm . '%';
+        }
+
+        $sql = "SELECT genre, COUNT(*) as count FROM utilisateurs $baseCondition GROUP BY genre";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
     
 }
 ?>

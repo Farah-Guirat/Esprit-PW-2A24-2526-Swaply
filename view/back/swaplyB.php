@@ -13,6 +13,7 @@ $database = new Database();
 $conn = $database->connect();
 $userModel = new User($conn);
 $totalUsers = $userModel->countUsersExceptAdmin('klai.aziz@admin.tn');
+$adminPhoto = $_SESSION['user']['photo'] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -82,7 +83,11 @@ $totalUsers = $userModel->countUsersExceptAdmin('klai.aziz@admin.tn');
         </div>
         
         <div class="user">
-          <img src="https://i.pravatar.cc/40?img=12" alt="Admin">
+          <?php if ($adminPhoto): ?>
+            <img src="../../uploads/profiles/<?= htmlspecialchars($adminPhoto) ?>" alt="Admin" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+          <?php else: ?>
+            <img src="https://i.pravatar.cc/40?img=12" alt="Admin">
+          <?php endif; ?>
           <div>
             <p class="name">Admin</p>
             <p class="role">Super Admin</p>

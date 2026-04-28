@@ -2,10 +2,11 @@
 // ── Point d'entrée principal – Messages ──────────────────────────────────────
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-// SESSION FORCÉE (pas de login) — changer 1=Farah ou 2=Aziz pour tester
-$_SESSION['id_user'] = 1;
-$_SESSION['prenom']  = 'Farah';
-$_SESSION['nom']     = 'Ksouri';
+// Vérifier si l'utilisateur est connecté
+if (!isset($_SESSION['id_user'])) {
+    header('Location: login.php');
+    exit;
+}
 
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../model/Message.php';

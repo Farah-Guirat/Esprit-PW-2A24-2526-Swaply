@@ -45,16 +45,34 @@ class Message {
         return $result ?: null;
     }
 
-    // Créer un message
-    public function create(string $contenu, int $id_expediteur, int $id_conversation): bool {
+    // ─── Créer un message (texte OU fichier) ─────────────────────────────────
+    // CORRECTION : fichier_path et colonnes fichier sont maintenant NULL par défaut
+    // → un message texte sans fichier fonctionne parfaitement
+    public function create(
+        string  $contenu,
+        int     $id_expediteur,
+        int     $id_conversation,
+        ?string $fichier_path          = null,
+        ?string $fichier_nom_original  = null,
+        ?string $fichier_type          = null,
+        ?int    $fichier_taille        = null
+    ): bool {
         $stmt = $this->pdo->prepare(
-            "INSERT INTO messages (contenu, id_expediteur, id_conversation)
-             VALUES (:contenu, :id_expediteur, :id_conversation)"
+            "INSERT INTO messages
+                (contenu, id_expediteur, id_conversation,
+                 fichier_path, fichier_nom_original, fichier_type, fichier_taille)
+             VALUES
+                (:contenu, :id_expediteur, :id_conversation,
+                 :fichier_path, :fichier_nom_original, :fichier_type, :fichier_taille)"
         );
         return $stmt->execute([
-            ':contenu'         => $contenu,
-            ':id_expediteur'   => $id_expediteur,
-            ':id_conversation' => $id_conversation,
+            ':contenu'               => $contenu,
+            ':id_expediteur'         => $id_expediteur,
+            ':id_conversation'       => $id_conversation,
+            ':fichier_path'          => $fichier_path,          // NULL si message texte
+            ':fichier_nom_original'  => $fichier_nom_original,  // NULL si message texte
+            ':fichier_type'          => $fichier_type,          // NULL si message texte
+            ':fichier_taille'        => $fichier_taille,        // NULL si message texte
         ]);
     }
 

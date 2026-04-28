@@ -7,6 +7,15 @@
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
+// Helper pour formater la taille des fichiers
+function formatFileSize($bytes) {
+    if ($bytes == 0) return '0 B';
+    $k = 1024;
+    $sizes = ['B', 'KB', 'MB', 'GB'];
+    $i = floor(log($bytes, $k));
+    return round($bytes / pow($k, $i), 2) . ' ' . $sizes[$i];
+}
+
 $id_user        = (int)($_SESSION['id_user'] ?? 0);
 $id_active_conv = $id_active_conv ?? (isset($_GET['id']) ? (int)$_GET['id'] : 0);
 
@@ -56,7 +65,23 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
         .navbar-links a { font-size:14px; color:#4b5563; text-decoration:none; }
         .navbar-links a:hover { color:#1D9E75; }
         .navbar-links a.active { color:#1D9E75; font-weight:600; border-bottom:2px solid #1D9E75; padding-bottom:2px; }
-        .navbar-avatar { width:34px; height:34px; border-radius:50%; background:#d1d5db; display:flex; align-items:center; justify-content:center; font-size:13px; color:#6b7280; margin-left:24px; }
+        
+        /* User Menu Dropdown */
+        .navbar-user-menu { position:relative; margin-left:24px; }
+        .navbar-avatar { width:34px; height:34px; border-radius:50%; background:#d1d5db; display:flex; align-items:center; justify-content:center; font-size:13px; color:#6b7280; cursor:pointer; border:none; transition:all 0.3s ease; font-weight:600; }
+        .navbar-avatar:hover { background:#cbd5e1; transform:scale(1.05); }
+        .navbar-dropdown { position:absolute; top:100%; right:0; margin-top:8px; background:#fff; border:1px solid #e5e7eb; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.12); z-index:1000; min-width:220px; display:none; overflow:hidden; }
+        .navbar-dropdown.show { display:block; animation:slideDown 0.2s ease; }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+        .navbar-dropdown-header { padding:12px 16px; border-bottom:1px solid #f3f4f6; background:#f9fafb; }
+        .navbar-dropdown-header strong { display:block; font-size:13px; color:#111827; margin-bottom:3px; }
+        .navbar-dropdown-header small { font-size:11px; color:#6b7280; }
+        .navbar-dropdown-item { display:flex; align-items:center; gap:8px; padding:10px 16px; font-size:13px; text-decoration:none; color:#374151; transition:all 0.2s; border-bottom:1px solid #f3f4f6; }
+        .navbar-dropdown-item:last-child { border-bottom:none; }
+        .navbar-dropdown-item:hover { background:#f9fafb; color:#1D9E75; }
+        .navbar-dropdown-logout { color:#dc2626; }
+        .navbar-dropdown-logout:hover { background:#fef2f2; color:#b91c1c; }
+        .navbar-dropdown-logout i { font-size:14px; }
 
         /* Layout */
         .msg-layout { display:flex; height:calc(100vh - 64px); }
@@ -67,8 +92,9 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
         .conv-sidebar-header h2 { font-size:15px; font-weight:600; color:#111827; }
         .btn-new-conv { background:#1D9E75; color:#fff; border:none; border-radius:8px; padding:6px 12px; font-size:12px; cursor:pointer; text-decoration:none; display:inline-block; }
         .btn-new-conv:hover { background:#178a64; }
-        .conv-search { padding:10px 14px; border-bottom:1px solid #e5e7eb; }
-        .conv-search input { width:100%; padding:8px 12px; border-radius:20px; border:1px solid #e5e7eb; background:#f9fafb; font-size:12px; outline:none; }
+        .conv-search { padding:10px 14px; border-bottom:1px solid #e5e7eb; display:flex; gap:8px; align-items:center; }
+        .conv-search input { flex:1; padding:8px 12px; border-radius:20px; border:1px solid #e5e7eb; background:#f9fafb; font-size:12px; outline:none; }
+        .conv-sort-select { padding:6px 10px; border-radius:8px; border:1px solid #e5e7eb; background:#f9fafb; font-size:12px; outline:none; cursor:pointer; }
         .conv-list { flex:1; overflow-y:auto; }
 
         /* Item conversation dans la sidebar */
@@ -97,6 +123,13 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
         .chat-header-info h3 { font-size:14px; font-weight:600; color:#111827; }
         .chat-header-info p { font-size:12px; color:#6b7280; }
         .online-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#1D9E75; margin-right:4px; }
+        .online-dot.offline { background:#9ca3af; }
+        .typing-indicator { font-size:12px; color:#6b7280; font-style:italic; margin-top:2px; }
+        .typing-dot { display:inline-block; width:4px; height:4px; border-radius:50%; background:#6b7280; margin:0 2px; animation:bounce 1.4s infinite; }
+        .typing-dot:nth-child(1) { animation-delay:0s; }
+        .typing-dot:nth-child(2) { animation-delay:0.2s; }
+        .typing-dot:nth-child(3) { animation-delay:0.4s; }
+        @keyframes bounce { 0%, 60%, 100% { transform:translateY(0); opacity:0.6; } 30% { transform:translateY(-8px); opacity:1; } }
         .btn-del-conv-header { margin-left:auto; padding:6px 12px; background:#fef2f2; border:1px solid #fecaca; border-radius:8px; color:#dc2626; font-size:12px; cursor:pointer; text-decoration:none; white-space:nowrap; }
         .btn-del-conv-header:hover { background:#fee2e2; }
 
@@ -110,8 +143,11 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
         .msg-row.other .msg-bubble { background:#fff; color:#111827; border-bottom-left-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,.06); }
         .msg-row.mine  .msg-bubble { background:#1D9E75; color:#fff; border-bottom-right-radius:4px; }
         .msg-avatar-sm { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; flex-shrink:0; }
-        .msg-time { font-size:10px; color:#9ca3af; margin-top:3px; }
-        .msg-row.mine .msg-time { text-align:right; }
+        .msg-time { font-size:10px; color:#9ca3af; margin-top:3px; display:flex; align-items:center; gap:4px; }
+        .msg-row.mine .msg-time { text-align:right; justify-content:flex-end; }
+        .msg-status { display:inline-block; font-weight:bold; }
+        .msg-status.unread { color:#999; }
+        .msg-status.read { color:#1D9E75; }
 
         /* Bouton ⋮ sur mes messages */
         .msg-options-btn { display:none; background:none; border:none; cursor:pointer; color:#9ca3af; font-size:18px; padding:2px 6px; line-height:1; align-self:flex-end; margin-bottom:4px; }
@@ -148,7 +184,19 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
         .btn-send { width:38px; height:38px; border-radius:50%; background:#1D9E75; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
         .btn-send:hover { background:#178a64; }
         .btn-send svg { width:16px; height:16px; fill:white; }
-        .char-count { font-size:11px; color:#9ca3af; text-align:right; margin-top:4px; }
+        .file-input-wrapper { position:relative; display:inline-block; }
+        .btn-file-attach { width:38px; height:38px; border-radius:50%; background:#f0f0f0; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#666; font-size:18px; transition:all 0.2s; }
+        .btn-file-attach:hover { background:#e0e0e0; }
+        .btn-file-attach.has-file { background:#1D9E75; color:white; }
+        #fileInput { display:none; }
+        .file-attachment-preview { padding:8px 12px; background:#f0f7ff; border-radius:8px; margin-top:8px; display:flex; align-items:center; justify-content:space-between; font-size:12px; }
+        .file-attachment-preview .file-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#0066cc; }
+        .file-attachment-preview .btn-remove-file { background:none; border:none; color:#dc2626; cursor:pointer; font-size:14px; padding:0 4px; }
+        .msg-file-attachment { background:#f0f7ff; border-left:3px solid #0066cc; padding:10px 12px; border-radius:6px; margin-top:6px; }
+        .msg-file-attachment a { color:#0066cc; text-decoration:none; font-weight:500; display:flex; align-items:center; gap:6px; }
+        .msg-file-attachment a:hover { text-decoration:underline; }
+        .msg-file-icon { font-size:16px; }
+        .msg-file-size { font-size:10px; color:#999; margin-top:3px; }
         .char-count.warn { color:#f59e0b; }
         .char-count.over { color:#dc2626; }
 
@@ -178,7 +226,20 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
         <a href="messagerie.php" class="active">Messages</a>
         <a href="#">Réclamations</a>
     </div>
-    <div class="navbar-avatar"><?= strtoupper(substr($_SESSION['prenom'] ?? 'U', 0, 1)) ?></div>
+    <div class="navbar-user-menu">
+        <button class="navbar-avatar" id="userMenuBtn" title="Menu utilisateur">
+            <?= strtoupper(substr($_SESSION['prenom'] ?? 'U', 0, 1)) ?>
+        </button>
+        <div class="navbar-dropdown" id="userDropdown">
+            <div class="navbar-dropdown-header">
+                <strong><?= htmlspecialchars($_SESSION['prenom'] ?? '') ?> <?= htmlspecialchars($_SESSION['nom'] ?? '') ?></strong>
+                <small><?= htmlspecialchars($_SESSION['email'] ?? '') ?></small>
+            </div>
+            <a href="logout.php" class="navbar-dropdown-item navbar-dropdown-logout">
+                <i class="fas fa-sign-out-alt"></i> Déconnexion
+            </a>
+        </div>
+    </div>
 </nav>
 
 <div class="msg-layout">
@@ -191,6 +252,12 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
         </div>
         <div class="conv-search">
             <input type="text" id="searchConv" placeholder="Rechercher..." oninput="filterConvs(this.value)">
+            <select id="sortConv" class="conv-sort-select" onchange="sortConvs(this.value)">
+                <option value="newest">📅 Plus récent</option>
+                <option value="oldest">📅 Plus ancien</option>
+                <option value="az">🔤 A→Z</option>
+                <option value="za">🔤 Z→A</option>
+            </select>
         </div>
         <div class="conv-list" id="convList">
             <?php if (!empty($conversations)): ?>
@@ -209,7 +276,8 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
                 ?>
                     <a href="messagerie.php?id=<?= $conv['id_conversation'] ?>"
                        class="conv-item <?= $isActive ? 'active' : '' ?>"
-                       data-name="<?= htmlspecialchars($conv['interlocuteur_prenom'].' '.$conv['interlocuteur_nom']) ?>">
+                       data-name="<?= htmlspecialchars($conv['interlocuteur_prenom'].' '.$conv['interlocuteur_nom']) ?>"
+                       data-time="<?= strtotime($conv['date_dernier_message'] ?? 'now') ?>">
                         <div class="conv-avatar <?= $av ?>"><?= htmlspecialchars($initials) ?></div>
                         <div class="conv-info">
                             <div class="conv-name"><?= htmlspecialchars($conv['interlocuteur_prenom'].' '.$conv['interlocuteur_nom']) ?></div>
@@ -245,6 +313,8 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
             $in     = ($conversation['id_user1'] == $id_user) ? $conversation['nom_user2']    : $conversation['nom_user1'];
             $ii     = strtoupper(substr($ip, 0, 1) . substr($in, 0, 1));
             $av_hdr = $av_classes[$conversation['id_conversation'] % 5];
+            // ID de l'autre utilisateur (interlocuteur)
+            $interlocuteur_id = ($conversation['id_user1'] == $id_user) ? $conversation['id_user2'] : $conversation['id_user1'];
             ?>
 
             <!-- Header de la conv active -->
@@ -252,7 +322,16 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
                 <div class="chat-header-avatar <?= $av_hdr ?>"><?= $ii ?></div>
                 <div class="chat-header-info">
                     <h3><?= htmlspecialchars($ip.' '.$in) ?></h3>
-                    <p><span class="online-dot"></span>En ligne</p>
+                    <p>
+                        <span class="online-dot" id="onlineIndicator"></span>
+                        <span id="onlineStatus">En ligne</span>
+                    </p>
+                    <div class="typing-indicator" id="typingIndicator" style="display:none;">
+                        En train d'écrire
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                    </div>
                 </div>
                 <a href="#" class="btn-del-conv-header"
                    onclick="openModalConv(event, <?= $id_active_conv ?>, '<?= htmlspecialchars($ip.' '.$in, ENT_QUOTES) ?>')">
@@ -277,9 +356,22 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
 
                             <div class="msg-wrap">
                                 <div class="msg-bubble"><?= nl2br(htmlspecialchars($msg['contenu'])) ?></div>
+                                <?php if (!empty($msg['fichier_path'])): ?>
+                                    <div class="msg-file-attachment">
+                                        <a href="<?= htmlspecialchars('../..' . '/' . $msg['fichier_path']) ?>" download="<?= htmlspecialchars($msg['fichier_nom_original']) ?>">
+                                            <span class="msg-file-icon">📄</span>
+                                            <span><?= htmlspecialchars($msg['fichier_nom_original']) ?></span>
+                                        </a>
+                                        <div class="msg-file-size"><?= formatFileSize($msg['fichier_taille']) ?></div>
+                                    </div>
+                                <?php endif; ?>
                                 <div class="msg-time">
                                     <?= date('H:i', strtotime($msg['date_envoi'])) ?>
-                                    <?= ($isMine && $msg['lu']) ? ' <span style="color:#1D9E75;">✓✓</span>' : '' ?>
+                                    <?php if ($isMine): ?>
+                                        <span class="msg-status <?= $msg['lu'] ? 'read' : 'unread' ?>" title="<?= $msg['lu'] ? 'Lu' : 'Non lu' ?>">
+                                            <?= $msg['lu'] ? '✓✓' : '✓' ?>
+                                        </span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
@@ -306,10 +398,21 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
-                <form method="POST" action="../../controller/MessageController.php?action=send" id="msgForm" novalidate>
+                <form method="POST" action="../../controller/MessageController.php?action=send" id="msgForm" novalidate enctype="multipart/form-data">
                     <input type="hidden" name="id_conversation" value="<?= $id_active_conv ?>">
+                    
+                    <!-- Aperçu du fichier attaché -->
+                    <div id="filePreview" class="file-attachment-preview" style="display:none;">
+                        <span class="file-name" id="fileName"></span>
+                        <button type="button" class="btn-remove-file" onclick="removeFileAttachment()">✕</button>
+                    </div>
+                    
                     <div class="chat-form-row">
-                        <textarea name="contenu" id="msgTextarea" rows="1" maxlength="2000"
+                        <div class="file-input-wrapper">
+                            <button type="button" class="btn-file-attach" id="btnFileAttach" title="Joindre un fichier" onclick="document.getElementById('fileInput').click()">📎</button>
+                            <input type="file" id="fileInput" name="fichier" onchange="handleFileSelect(this)">
+                        </div>
+                        <textarea name="contenu" id="msgTextarea" rows="1"
                             placeholder="Écrire un message... (Entrée pour envoyer)"
                             oninput="autoResize(this); updateCharCount(this)"></textarea>
                         <button type="button" class="btn-send" onclick="validateAndSend()">
@@ -404,16 +507,48 @@ function validateAndSend() {
     document.getElementById('msgForm').submit();
 }
 
-// Entrée = envoyer (Shift+Entrée = saut de ligne)
+
 document.getElementById('msgTextarea')?.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); validateAndSend(); }
 });
 
-// ── Filtre conversations ──────────────────────────────────────────────────────
+
 function filterConvs(q) {
     document.querySelectorAll('.conv-item').forEach(item => {
         const name = (item.getAttribute('data-name') || '').toLowerCase();
         item.style.display = name.includes(q.toLowerCase()) ? '' : 'none';
+    });
+}
+
+// ── Tri des conversations ──────────────────────────────────────────────────
+function sortConvs(sortBy) {
+    const convList = document.getElementById('convList');
+    const items = Array.from(document.querySelectorAll('.conv-item'));
+    
+    items.sort((a, b) => {
+        const nameA = (a.getAttribute('data-name') || '').toLowerCase();
+        const nameB = (b.getAttribute('data-name') || '').toLowerCase();
+        const timeA = a.getAttribute('data-time') || '9999999999';
+        const timeB = b.getAttribute('data-time') || '9999999999';
+        
+        switch(sortBy) {
+            case 'az':
+                return nameA.localeCompare(nameB);
+            case 'za':
+                return nameB.localeCompare(nameA);
+            case 'newest':
+                return parseInt(timeB) - parseInt(timeA);
+            case 'oldest':
+                return parseInt(timeA) - parseInt(timeB);
+            default:
+                return 0;
+        }
+    });
+    
+    items.forEach(item => {
+        if (item.style.display !== 'none') {
+            convList.appendChild(item);
+        }
     });
 }
 
@@ -467,6 +602,148 @@ function closeModalConv() { document.getElementById('modalConv').classList.remov
 document.getElementById('modalConv').addEventListener('click', e => {
     if (e.target === document.getElementById('modalConv')) closeModalConv();
 });
+
+// ── Real-time Status Updates ──────────────────────────────────────────────
+<?php if ($id_active_conv > 0): ?>
+const currentConvId = <?= $id_active_conv ?>;
+const currentUserId = <?= $id_user ?>;
+const interlocuteurId = <?= $interlocuteur_id ?? 0 ?>;
+
+// Mettre à jour le statut "en train d'écrire" quand l'utilisateur tape
+let typingTimeout;
+const msgTextarea = document.getElementById('msgTextarea');
+if (msgTextarea) {
+    msgTextarea.addEventListener('input', () => {
+        clearTimeout(typingTimeout);
+        
+        // Envoyer le statut "typing"
+        fetch('../../controller/RealtimeController.php?action=updateTyping', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'id_conversation=' + currentConvId + '&is_typing=1'
+        });
+        
+        // Arrêter le typing après 1 seconde d'inactivité
+        typingTimeout = setTimeout(() => {
+            fetch('../../controller/RealtimeController.php?action=updateTyping', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'id_conversation=' + currentConvId + '&is_typing=0'
+            });
+        }, 1000);
+    });
+}
+
+// Mettre à jour le statut "en ligne" toutes les 10 secondes
+setInterval(() => {
+    fetch('../../controller/RealtimeController.php?action=updateOnline', {
+        method: 'POST'
+    });
+}, 10000);
+
+// Vérifier le statut en ligne et le typing toutes les 2 secondes
+setInterval(() => {
+    // Vérifier si l'autre utilisateur est en ligne
+    fetch('../../controller/RealtimeController.php?action=getOnline&id_user=' + interlocuteurId)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const indicator = document.getElementById('onlineIndicator');
+                const status = document.getElementById('onlineStatus');
+                if (data.online) {
+                    indicator.classList.remove('offline');
+                    status.textContent = 'En ligne';
+                } else {
+                    indicator.classList.add('offline');
+                    status.textContent = data.last_seen_ago ? 'Vu ' + data.last_seen_ago : 'Hors ligne';
+                }
+            }
+        });
+    
+    // Vérifier qui est en train de taper
+    fetch('../../controller/RealtimeController.php?action=getTyping&id_conversation=' + currentConvId)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const typingDiv = document.getElementById('typingIndicator');
+                // Si au moins un utilisateur tape
+                if (data.typing_users.length > 0) {
+                    typingDiv.style.display = 'block';
+                } else {
+                    typingDiv.style.display = 'none';
+                }
+            }
+        });
+}, 2000);
+
+// Mettre à jour le statut au démarrage
+fetch('../../controller/RealtimeController.php?action=updateOnline', {
+    method: 'POST'
+});
+<?php endif; ?>
+
+// ── Gestion des fichiers attachés ────────────────────────────────────────────
+function handleFileSelect(input) {
+    if (!input.files || input.files.length === 0) return;
+    
+    const file = input.files[0];
+    const maxSize = 10 * 1024 * 1024; // 10 MB
+    
+    if (file.size > maxSize) {
+        alert('Le fichier est trop volumineux (max 10 MB).');
+        input.value = '';
+        return;
+    }
+    
+    const preview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    const btn = document.getElementById('btnFileAttach');
+    
+    fileName.textContent = file.name + ' (' + formatFileSize(file.size) + ')';
+    preview.style.display = 'flex';
+    btn.classList.add('has-file');
+}
+
+function removeFileAttachment() {
+    const input = document.getElementById('fileInput');
+    const preview = document.getElementById('filePreview');
+    const btn = document.getElementById('btnFileAttach');
+    
+    input.value = '';
+    preview.style.display = 'none';
+    btn.classList.remove('has-file');
+}
+
+function formatFileSize(bytes) {
+    if (bytes == 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes, k));
+    return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+}
+
+// ── User Menu Dropdown ──────────────────────────────────────────────────────
+const userMenuBtn = document.getElementById('userMenuBtn');
+const userDropdown = document.getElementById('userDropdown');
+
+if (userMenuBtn && userDropdown) {
+    // Ouvrir/Fermer le menu au clic
+    userMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userDropdown.classList.toggle('show');
+    });
+
+    // Fermer le menu au clic ailleurs
+    document.addEventListener('click', () => {
+        userDropdown.classList.remove('show');
+    });
+
+    // Ne pas fermer le menu au clic dedans
+    userDropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+}
+
 </script>
 </body>
 </html>

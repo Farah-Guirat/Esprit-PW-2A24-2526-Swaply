@@ -22,19 +22,19 @@ $messages = $messages ?? [];
     <style>
         * { box-sizing:border-box; margin:0; padding:0; }
         body { font-family:'Segoe UI',sans-serif; background:#f3f4f6; display:flex; min-height:100vh; }
-        .sidebar { width:240px; background:#1a1a2e; min-height:100vh; display:flex; flex-direction:column; flex-shrink:0; position:fixed; top:0; left:0; height:100%; }
-        .sidebar-brand { padding:20px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(255,255,255,.08); }
-        .sidebar-brand-icon { width:36px; height:36px; background:#1D9E75; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
-        .sidebar-brand-text { font-size:15px; font-weight:700; color:#fff; line-height:1.2; }
+        .sidebar { width:240px; background:#f8f9fa; min-height:100vh; display:flex; flex-direction:column; flex-shrink:0; position:fixed; top:0; left:0; height:100%; border-right:1px solid #e5e7eb; }
+        .sidebar-brand { padding:20px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #e5e7eb; }
+        .sidebar-brand-icon { width:36px; height:36px; background:#2c3e50; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; color:#fff; }
+        .sidebar-brand-text { font-size:15px; font-weight:700; color:#2c3e50; line-height:1.2; }
         .sidebar-brand-text span { font-size:11px; color:#9ca3af; font-weight:400; display:block; }
         .sidebar-nav { padding:12px 0; flex:1; }
-        .nav-item { display:flex; align-items:center; gap:10px; padding:11px 16px; color:#9ca3af; text-decoration:none; font-size:13px; border-left:3px solid transparent; }
-        .nav-item:hover { background:rgba(255,255,255,.05); color:#fff; }
-        .nav-item.active { background:rgba(29,158,117,.15); color:#1D9E75; border-left-color:#1D9E75; font-weight:600; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:11px 16px; color:#666; text-decoration:none; font-size:13px; border-left:3px solid transparent; transition:all 0.2s; }
+        .nav-item:hover { background:#f0f0f0; color:#2c3e50; }
+        .nav-item.active { background:#e8eef5; color:#2c3e50; border-left-color:#2c3e50; font-weight:600; }
         .nav-icon { width:18px; text-align:center; font-size:15px; }
         .main { margin-left:240px; flex:1; display:flex; flex-direction:column; }
         .topbar { height:60px; background:#fff; border-bottom:1px solid #e5e7eb; display:flex; align-items:center; padding:0 28px; gap:16px; position:sticky; top:0; z-index:50; }
-        .topbar-title { font-size:18px; font-weight:700; color:#1D9E75; flex:1; }
+        .topbar-title { font-size:18px; font-weight:700; color:#2c3e50; flex:1; }
         .btn-back { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border:1px solid #e5e7eb; border-radius:8px; font-size:13px; color:#6b7280; text-decoration:none; background:#fff; }
         .btn-back:hover { background:#f9fafb; }
         .topbar-user { display:flex; align-items:center; gap:10px; }
@@ -206,7 +206,23 @@ $messages = $messages ?? [];
                             <?php endif; ?>
                         </div>
                         <div class="msg-bubble-wrap">
-                            <div class="msg-bubble"><?= nl2br(htmlspecialchars($msg['contenu'])) ?></div>
+                            <div class="msg-bubble">
+                                <?= nl2br(htmlspecialchars($msg['contenu'])) ?>
+                                <?php if (!empty($msg['fichier_path'])): ?>
+                                    <div style="margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,.2);">
+                                        <a href="../../<?= htmlspecialchars($msg['fichier_path']) ?>" 
+                                           download="<?= htmlspecialchars($msg['fichier_nom_original']) ?>"
+                                           style="display:inline-flex; align-items:center; gap:6px; color:inherit; text-decoration:none; background:rgba(0,0,0,.15); padding:6px 10px; border-radius:6px; font-size:12px; font-weight:600;">
+                                            📎 <?= htmlspecialchars($msg['fichier_nom_original']) ?>
+                                        </a>
+                                        <?php if (!empty($msg['fichier_taille'])): ?>
+                                            <span style="display:block; margin-top:4px; font-size:10px; opacity:.8;">
+                                                <?= number_format($msg['fichier_taille'] / 1024, 0) ?> KB
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                             <!-- Admin peut modifier ou supprimer chaque message -->
                             <div class="msg-actions">
                                 <a href="edit_message.php?id=<?= $msg['id_message'] ?>&from_conv=<?= $conversation['id_conversation'] ?>"

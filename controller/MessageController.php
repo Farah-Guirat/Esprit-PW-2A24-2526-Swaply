@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../model/Message.php';
 require_once __DIR__ . '/../model/Conversation.php';
+require_once __DIR__ . '/../config/database.php';
 
 class MessageController {
 
@@ -57,7 +58,7 @@ class MessageController {
             $this->redirectFront();
         }
 
-        // Marquer les messages comme lus
+        // Marquer les messages reçus comme lus dès l'ouverture de la conversation
         $this->messageModel->markAsRead($id_active_conv, $id_user);
 
         // Charger les messages de cette conversation (BDD)
@@ -71,6 +72,7 @@ class MessageController {
 
     // ─── FRONT : envoyer un message → enregistrement en BDD ──────────────────
     // PROBLÈME 2 CORRIGÉ : create() insère réellement en BDD via PDO
+    // Supporte aussi l'upload de fichiers
     public function sendMessage(): void {
         $this->startSession();
         $errors          = [];
@@ -79,9 +81,12 @@ class MessageController {
         $contenu         = isset($_POST['contenu']) ? trim($_POST['contenu']) : '';
 
         // Validation serveur (sans HTML5)
-        if ($contenu === '')              $errors[] = "Le message ne peut pas être vide.";
-        elseif (strlen($contenu) > 2000)  $errors[] = "Le message ne peut pas dépasser 2000 caractères.";
-        if ($id_conversation <= 0)        $errors[] = "Conversation invalide.";
+        if ($contenu === '' && empty($_FILES['fichier']))  
+            $errors[] = "Le message ne peut pas être vide.";
+        elseif (strlen($contenu) > 2000)  
+            $errors[] = "Le message ne peut pas dépasser 2000 caractères.";
+        if ($id_conversation <= 0)        
+            $errors[] = "Conversation invalide.";
 
         if (empty($errors)) {
             $conv = $this->conversationModel->getById($id_conversation);
@@ -89,9 +94,35 @@ class MessageController {
                 $errors[] = "Accès refusé à cette conversation.";
         }
 
+        // Traiter l'upload du fichier
+        $fichier_path = null;
+        $fichier_nom_original = null;
+        $fichier_type = null;
+        $fichier_taille = null;
+
+        if (!empty($_FILES['fichier']) && $_FILES['fichier']['error'] === UPLOAD_ERR_OK) {
+            $upload = $this->handleFileUpload($_FILES['fichier']);
+            if (is_array($upload) && isset($upload['error'])) {
+                $errors[] = $upload['error'];
+            } else {
+                $fichier_path = $upload['path'];
+                $fichier_nom_original = $upload['name'];
+                $fichier_type = $upload['type'];
+                $fichier_taille = $upload['size'];
+            }
+        }
+
         if (empty($errors)) {
             // INSERT en base de données via PDO (model Message::create)
-            $this->messageModel->create($contenu, $id_user, $id_conversation);
+            $this->messageModel->create(
+                $contenu, 
+                $id_user, 
+                $id_conversation,
+                $fichier_path,
+                $fichier_nom_original,
+                $fichier_type,
+                $fichier_taille
+            );
             $this->redirectFront("?id=$id_conversation");
         }
 
@@ -101,6 +132,66 @@ class MessageController {
         $messages       = $this->messageModel->getByConversation($id_conversation);
         $conversations  = $this->conversationModel->getByUser($id_user);
         require __DIR__ . '/../view/Front/Messages.php';
+    }
+
+    // ─── Gestion de l'upload de fichier ──────────────────────────────────────
+    private function handleFileUpload(array $file): array {
+        // Limite de taille : 10 MB
+        $maxSize = 10 * 1024 * 1024;
+        // Extensions autorisées
+        $allowedExts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'jpg', 'jpeg', 'png', 'gif'];
+        // Types MIME autorisés
+        $allowedMimes = ['application/pdf', 'application/msword', 
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'application/vnd.ms-excel',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'application/vnd.ms-powerpoint',
+                        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                        'text/plain', 'application/zip',
+                        'image/jpeg', 'image/png', 'image/gif'];
+
+        // Vérification de la taille
+        if ($file['size'] > $maxSize) {
+            return ['error' => 'Le fichier est trop volumineux (max 10 MB).'];
+        }
+
+        // Vérification du type MIME
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mimeType, $allowedMimes)) {
+            return ['error' => 'Type de fichier non autorisé.'];
+        }
+
+        // Vérification de l'extension
+        $filename = basename($file['name']);
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        if (!in_array($ext, $allowedExts)) {
+            return ['error' => 'Extension de fichier non autorisée.'];
+        }
+
+        // Créer le dossier d'upload s'il n'existe pas
+        $uploadDir = __DIR__ . '/../uploads/messages/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // Générer un nom unique pour le fichier
+        $uniqueName = uniqid() . '_' . time() . '.' . $ext;
+        $uploadPath = $uploadDir . $uniqueName;
+
+        // Déplacer le fichier uploadé
+        if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
+            return [
+                'path' => 'uploads/messages/' . $uniqueName,
+                'name' => $filename,
+                'type' => $mimeType,
+                'size' => $file['size']
+            ];
+        } else {
+            return ['error' => 'Erreur lors de l\'upload du fichier.'];
+        }
     }
 
     // ─── FRONT : créer une conversation ──────────────────────────────────────
@@ -116,7 +207,7 @@ class MessageController {
             $id_destinataire = isset($_POST['id_destinataire']) ? (int)$_POST['id_destinataire'] : 0;
             $contenu_init    = isset($_POST['contenu_init']) ? trim($_POST['contenu_init']) : '';
 
-            // Validation serveur (sans HTML5)
+            
             if ($id_destinataire <= 0)             $errors[] = "Veuillez sélectionner un destinataire.";
             elseif ($id_destinataire === $id_user)  $errors[] = "Vous ne pouvez pas vous écrire à vous-même.";
             if ($contenu_init === '')               $errors[] = "Le premier message ne peut pas être vide.";
@@ -215,7 +306,70 @@ class MessageController {
     // ─── BACK : liste des messages ────────────────────────────────────────────
     public function indexBack(): void {
         $messages = $this->messageModel->getAll();
+        $stats = $this->getMessageStats();
         require __DIR__ . '/../view/Back/messages.php';
+    }
+
+    // ─── Statistiques messages ────────────────────────────────────────────────
+    private function getMessageStats(): array {
+        $pdo = Database::getInstance()->getConnection();
+
+        // Total messages
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM messages");
+        $total = (int)$stmt->fetchColumn();
+
+        // Messages ce mois
+        $stmt = $pdo->query(
+            "SELECT COUNT(*) as total FROM messages 
+             WHERE MONTH(date_envoi) = MONTH(NOW()) 
+             AND YEAR(date_envoi) = YEAR(NOW())"
+        );
+        $thisMonth = (int)$stmt->fetchColumn();
+
+        // Messages aujourd'hui
+        $stmt = $pdo->query(
+            "SELECT COUNT(*) as total FROM messages 
+             WHERE DATE(date_envoi) = DATE(NOW())"
+        );
+        $today = (int)$stmt->fetchColumn();
+
+        // Messages lus
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM messages WHERE lu = 1");
+        $read = (int)$stmt->fetchColumn();
+
+        // Messages non lus
+        $unread = $total - $read;
+
+        // Messages avec fichiers
+        $stmt = $pdo->query("SELECT COUNT(*) as total FROM messages WHERE fichier_path IS NOT NULL");
+        $withFiles = (int)$stmt->fetchColumn();
+
+        // Longueur moyenne
+        $stmt = $pdo->query("SELECT AVG(LENGTH(contenu)) as avg FROM messages");
+        $avgLength = round((float)$stmt->fetchColumn(), 0);
+
+        // Top 5 utilisateurs
+        $stmt = $pdo->query(
+            "SELECT u.prenom, u.nom, COUNT(m.id_message) as count
+             FROM messages m
+             JOIN utilisateurs u ON u.id_u = m.id_expediteur
+             GROUP BY m.id_expediteur
+             ORDER BY count DESC
+             LIMIT 5"
+        );
+        $topUsers = $stmt->fetchAll();
+
+        return [
+            'total'         => $total,
+            'ce_mois'       => $thisMonth,
+            'aujourd_hui'   => $today,
+            'lus'           => $read,
+            'non_lus'       => $unread,
+            'avec_fichiers' => $withFiles,
+            'longueur_avg'  => $avgLength,
+            'taux_lus'      => $total > 0 ? round(($read / $total) * 100, 0) : 0,
+            'top_users'     => $topUsers,
+        ];
     }
 
     // ─── BACK : éditer un message ─────────────────────────────────────────────

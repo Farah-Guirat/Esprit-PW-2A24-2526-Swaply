@@ -9,6 +9,7 @@ if (!isset($messages)) {
     $ctrl->indexBack();
     exit;
 }
+$stats = $stats ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -20,19 +21,19 @@ if (!isset($messages)) {
     <style>
         * { box-sizing:border-box; margin:0; padding:0; }
         body { font-family:'Segoe UI',sans-serif; background:#f3f4f6; display:flex; min-height:100vh; }
-        .sidebar { width:240px; background:#1a1a2e; min-height:100vh; display:flex; flex-direction:column; flex-shrink:0; position:fixed; top:0; left:0; height:100%; }
-        .sidebar-brand { padding:20px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(255,255,255,.08); }
-        .sidebar-brand-icon { width:36px; height:36px; background:#1D9E75; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; }
-        .sidebar-brand-text { font-size:15px; font-weight:700; color:#fff; line-height:1.2; }
+        .sidebar { width:240px; background:#f8f9fa; min-height:100vh; display:flex; flex-direction:column; flex-shrink:0; position:fixed; top:0; left:0; height:100%; border-right:1px solid #e5e7eb; }
+        .sidebar-brand { padding:20px 16px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #e5e7eb; }
+        .sidebar-brand-icon { width:36px; height:36px; background:#2c3e50; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; color:#fff; }
+        .sidebar-brand-text { font-size:15px; font-weight:700; color:#2c3e50; line-height:1.2; }
         .sidebar-brand-text span { font-size:11px; color:#9ca3af; font-weight:400; display:block; }
         .sidebar-nav { padding:12px 0; flex:1; }
-        .nav-item { display:flex; align-items:center; gap:10px; padding:11px 16px; color:#9ca3af; text-decoration:none; font-size:13px; border-left:3px solid transparent; }
-        .nav-item:hover { background:rgba(255,255,255,.05); color:#fff; }
-        .nav-item.active { background:rgba(29,158,117,.15); color:#1D9E75; border-left-color:#1D9E75; font-weight:600; }
+        .nav-item { display:flex; align-items:center; gap:10px; padding:11px 16px; color:#666; text-decoration:none; font-size:13px; border-left:3px solid transparent; transition:all 0.2s; }
+        .nav-item:hover { background:#f0f0f0; color:#2c3e50; }
+        .nav-item.active { background:#e8eef5; color:#2c3e50; border-left-color:#2c3e50; font-weight:600; }
         .nav-icon { width:18px; text-align:center; font-size:15px; }
         .main { margin-left:240px; flex:1; display:flex; flex-direction:column; }
         .topbar { height:60px; background:#fff; border-bottom:1px solid #e5e7eb; display:flex; align-items:center; padding:0 28px; gap:16px; position:sticky; top:0; z-index:50; }
-        .topbar-title { font-size:20px; font-weight:700; color:#1D9E75; flex:1; }
+        .topbar-title { font-size:20px; font-weight:700; color:#2c3e50; flex:1; }
         .topbar-search { display:flex; align-items:center; gap:8px; background:#f3f4f6; border-radius:20px; padding:6px 14px; width:240px; }
         .topbar-search input { border:none; background:none; font-size:13px; outline:none; width:100%; }
         .topbar-user { display:flex; align-items:center; gap:10px; }
@@ -77,6 +78,13 @@ if (!isset($messages)) {
         .btn-cancel { padding:8px 20px; border:1px solid #e5e7eb; border-radius:8px; background:none; cursor:pointer; font-size:13px; }
         .btn-confirm-del { padding:8px 20px; background:#dc2626; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600; }
         .btn-confirm-del:hover { background:#b91c1c; }
+        
+        /* ── KPI Cards ── */
+        .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:20px; }
+        .kpi-card { background:#fff; border-radius:12px; border:1px solid #e5e7eb; padding:16px; }
+        .kpi-label { font-size:11px; color:#9ca3af; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+        .kpi-number { font-size:28px; font-weight:700; color:#111827; margin-bottom:6px; }
+        .kpi-subtitle { font-size:12px; color:#6b7280; }
     </style>
 </head>
 <body>
@@ -120,6 +128,42 @@ if (!isset($messages)) {
         <?php endif; ?>
         <?php if (isset($_GET['deleted'])): ?>
             <div class="alert alert-danger">🗑 Message supprimé.</div>
+        <?php endif; ?>
+
+        <!-- Statistiques messages -->
+        <?php if (!empty($stats)): ?>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <p class="kpi-label">✉️ Total</p>
+                <p class="kpi-number"><?= $stats['total'] ?></p>
+                <p class="kpi-subtitle">Messages</p>
+            </div>
+            <div class="kpi-card">
+                <p class="kpi-label">📅 Ce mois</p>
+                <p class="kpi-number"><?= $stats['ce_mois'] ?></p>
+                <p class="kpi-subtitle">Messages</p>
+            </div>
+            <div class="kpi-card">
+                <p class="kpi-label">📆 Aujourd'hui</p>
+                <p class="kpi-number"><?= $stats['aujourd_hui'] ?></p>
+                <p class="kpi-subtitle">Messages</p>
+            </div>
+            <div class="kpi-card">
+                <p class="kpi-label">✓ Lus</p>
+                <p class="kpi-number"><?= $stats['taux_lus'] ?>%</p>
+                <p class="kpi-subtitle"><?= $stats['lus'] ?>/<?= $stats['total'] ?> messages</p>
+            </div>
+            <div class="kpi-card">
+                <p class="kpi-label">👤 Non lus</p>
+                <p class="kpi-number"><?= $stats['non_lus'] ?></p>
+                <p class="kpi-subtitle"><?= round(($stats['non_lus'] / max($stats['total'], 1)) * 100, 0) ?>% du total</p>
+            </div>
+            <div class="kpi-card">
+                <p class="kpi-label">📎 Fichiers</p>
+                <p class="kpi-number"><?= $stats['avec_fichiers'] ?></p>
+                <p class="kpi-subtitle"><?= round(($stats['avec_fichiers'] / max($stats['total'], 1)) * 100, 1) ?>% avec pièce</p>
+            </div>
+        </div>
         <?php endif; ?>
 
         <div class="table-card">

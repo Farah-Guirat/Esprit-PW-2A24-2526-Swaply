@@ -1,3 +1,10 @@
+<?php
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../controller/StatisticsController.php';
+
+$ctrl = new StatisticsController();
+$stats = $ctrl->getStats();
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -40,7 +47,7 @@
       <a href="#" onclick="showPage('reclamations')" class="menu-item" id="menu-reclamations">
         <i class="fa-solid fa-exclamation-triangle"></i> Réclamations
       </a>
-      <a href="#" onclick="showPage('stats')" class="menu-item" id="menu-stats">
+      <a href="statistics.php" class="menu-item" id="menu-stats">
         <i class="fa-solid fa-chart-bar"></i> Statistiques
       </a>
       <a href="#" onclick="showPage('settings')" class="menu-item" id="menu-settings">
@@ -81,34 +88,34 @@
       <div id="dashboard-page">
         <div class="kpi-grid">
           <div class="kpi-card">
-            <p class="kpi-label">Total Utilisateurs</p>
-            <p class="kpi-number">12 458</p>
-            <p class="kpi-change positive">+8% ce mois</p>
+            <p class="kpi-label">💬 Conversations</p>
+            <p class="kpi-number"><?= $stats['conversations']['total'] ?></p>
+            <p class="kpi-change positive"><?= $stats['conversations']['actives'] ?> actives</p>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">Offres publiées</p>
-            <p class="kpi-number">847</p>
-            <p class="kpi-change positive">+23 aujourd’hui</p>
+            <p class="kpi-label">✉️ Messages</p>
+            <p class="kpi-number"><?= $stats['messages']['total'] ?></p>
+            <p class="kpi-change positive">+<?= $stats['messages']['aujourd_hui'] ?> aujourd'hui</p>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">Demandes en cours</p>
-            <p class="kpi-number">312</p>
-            <p class="kpi-change negative">-5%</p>
+            <p class="kpi-label">👥 Utilisateurs</p>
+            <p class="kpi-number"><?= $stats['conversations']['utilisateurs_uniq'] ?></p>
+            <p class="kpi-change positive">En conversations</p>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">Conversations actives</p>
-            <p class="kpi-number">184</p>
-            <p class="kpi-change positive">+12</p>
+            <p class="kpi-label">📎 Fichiers</p>
+            <p class="kpi-number"><?= $stats['fichiers']['total'] ?></p>
+            <p class="kpi-change positive"><?= StatisticsController::formatBytes($stats['fichiers']['taille_tot']) ?></p>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">Réclamations en attente</p>
-            <p class="kpi-number red">27</p>
-            <p class="kpi-change negative">Attention</p>
+            <p class="kpi-label">📊 Ce mois</p>
+            <p class="kpi-number"><?= $stats['messages']['ce_mois'] ?></p>
+            <p class="kpi-change positive">messages</p>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">Publications totales</p>
-            <p class="kpi-number">1 392</p>
-            <p class="kpi-change positive">+41 ce mois</p>
+            <p class="kpi-label">👤 Lus</p>
+            <p class="kpi-number"><?= round(($stats['messages']['lus'] / max($stats['messages']['total'], 1)) * 100, 0) ?>%</p>
+            <p class="kpi-change positive"><?= $stats['messages']['lus'] ?> / <?= $stats['messages']['total'] ?></p>
           </div>
         </div>
       </div>
@@ -122,5 +129,16 @@
 </div>
 
 <script src="script.js"></script>
+<script>
+// Ajouter un lien aux statistiques complètes
+const dashboardPageDiv = document.querySelector('#dashboard-page');
+if (dashboardPageDiv) {
+  const link = document.createElement('div');
+  link.style.textAlign = 'center';
+  link.style.marginTop = '32px';
+  link.innerHTML = '<a href="statistics.php" style="display:inline-block;padding:10px 20px;background:#2c3e50;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;">📊 Voir les statistiques complètes</a>';
+  dashboardPageDiv.appendChild(link);
+}
+</script>
 </body>
 </html>

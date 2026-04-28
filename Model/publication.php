@@ -1,5 +1,4 @@
 <?php
-// model/Publication.php
 class Publication {
     private $conn;
     private $table_name = "publications";
@@ -9,12 +8,12 @@ class Publication {
     public $contenu;
     public $id_client;
     public $image;
+    public $likes;
 
     public function __construct($db) {
         $this->conn = $db;
     }
 
-    // Gère la création automatique ou la récupération de l'utilisateur par son nom
     public function getOrCreateClient($nom) {
         $query = "SELECT id_client FROM clients WHERE nom = ?";
         $stmt = $this->conn->prepare($query);
@@ -32,18 +31,24 @@ class Publication {
         }
     }
 
-    public function readAll() {
+    public function readAll($search = '', $sort = 'date') {
         $query = "SELECT p.*, c.nom FROM " . $this->table_name . " p 
-                  JOIN clients c ON p.id_client = c.id_client 
-                  ORDER BY p.date_pub DESC";
+                  JOIN clients c ON p.id_client = c.id_client";
+        if (!empty($search)) {
+            $query .= " WHERE p.titre LIKE :search";
+        }
+        $query .= " ORDER BY " . ($sort == 'likes' ? 'p.likes DESC' : 'p.date_pub DESC');
         $stmt = $this->conn->prepare($query);
+        if (!empty($search)) {
+            $stmt->bindValue(':search', '%' . $search . '%');
+        }
         $stmt->execute();
         return $stmt;
     }
 
     public function create() {
-        $query = "INSERT INTO " . $this->table_name . " (titre, contenu, id_client, image) 
-                  VALUES (:titre, :contenu, :id_client, :image)";
+        $query = "INSERT INTO " . $this->table_name . " (titre, contenu, id_client, image, likes) 
+                  VALUES (:titre, :contenu, :id_client, :image, 0)";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":titre", $this->titre);
         $stmt->bindParam(":contenu", $this->contenu);
@@ -68,5 +73,21 @@ class Publication {
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":id_pub", $this->id_pub);
         return $stmt->execute();
+    }
+
+    public function incrementLike() {
+        $query = "UPDATE " . $this->table_name . " SET likes = likes + 1 WHERE id_pub = :id_pub";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id_pub", $this->id_pub);
+        return $stmt->execute();
+    }
+
+    public function getLikes() {
+        $query = "SELECT likes FROM " . $this->table_name . " WHERE id_pub = :id_pub";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id_pub", $this->id_pub);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $row['likes'] : 0;
     }
 }

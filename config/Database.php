@@ -1,5 +1,4 @@
 <?php
-// config/Database.php
 class Database {
     private $host = "localhost";
     private $db_name = "swaply_db";

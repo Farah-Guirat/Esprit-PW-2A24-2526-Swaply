@@ -1,8 +1,7 @@
 <?php
-// views/listepublication.php
 require_once '../config/Database.php';
 require_once '../model/Publication.php';
-require_once '../model/Commentaire.php'; // Assurez-vous d'avoir créé ce fichier
+require_once '../model/Commentaire.php';
 require_once '../controllers/PublicationController.php';
 
 $database = new Database();
@@ -13,12 +12,10 @@ $comModel = new Commentaire($db);
 $controller = new PublicationController();
 $controller->handleRequest();
 
-// Logique spécifique aux commentaires
 if (isset($_POST['add_comment'])) {
     $com_nom = trim($_POST['com_nom'] ?? '');
     $com_text = trim($_POST['com_text'] ?? '');
     if (empty($com_nom) || empty($com_text)) {
-        // Afficher une erreur ou rediriger avec message
         header("Location: listepublication.php?error=comment");
         exit();
     }
@@ -37,20 +34,13 @@ if (isset($_POST['del_comment'])) {
     exit();
 }
 
-if (isset($_POST['edit_comment'])) {
-    $edit_contenu = trim($_POST['edit_contenu'] ?? '');
-    if (empty($edit_contenu)) {
-        header("Location: listepublication.php?error=edit_comment");
-        exit();
-    }
-    $comModel->id_com = $_POST['id_com'];
-    $comModel->contenu = $edit_contenu;
-    $comModel->update();
-    header("Location: listepublication.php");
+if (isset($_POST['like'])) {
+    $controller->handleLike($_POST['id_pub']);
     exit();
 }
 
-$stmt = $pubModel->readAll();
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$stmt = $pubModel->readAll($search);
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html lang="fr">
@@ -58,9 +48,42 @@ $stmt = $pubModel->readAll();
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>Swaply - Communauté</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="../Assets/style.css">
 </head>
-<body class="bg-slate-50 min-h-screen flex">
-    <!-- Sidebar -->
+<body class="bg-slate-50 min-h-screen">
+
+  <div class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-teal-500 rounded-2xl flex items-center justify-center text-white font-bold text-2xl">S</div>
+        <h1 class="text-2xl font-bold text-gray-800">Swaply</h1>
+      </div>
+
+      <div class="flex items-center gap-8 text-sm font-medium">
+        <a href="index.html" class="nav-link active">Accueil</a>
+        <a href="profils.html" class="nav-link">Profils</a>
+        <a href="projets.html" class="nav-link">Projets</a>
+        <a href="offres.html" class="nav-link">Offres</a>
+        <a href="demandes.html" class="nav-link">Demandes</a>
+        <a href="listepublication.php" class="nav-link">Publications</a>
+        <a href="messages.html" class="nav-link">Messages</a>
+        <a href="reclamations.html" class="nav-link">Réclamations</a>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <form method="GET" action="listepublication.php" class="flex items-center gap-2">
+          <input type="text" name="search" placeholder="Rechercher par titre..." value="<?= htmlspecialchars($search) ?>" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+          <button type="submit" class="bg-teal-500 text-white px-4 py-2 rounded-lg hover:bg-teal-600">Rechercher</button>
+        </form>
+        <div class="w-10 h-10 bg-teal-100 rounded-2xl overflow-hidden border-2 border-white shadow">
+          <img src="https://i.pravatar.cc/150?img=68" alt="Profil" class="w-full h-full object-cover">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex min-h-screen">
     <div class="w-64 bg-white shadow-lg min-h-screen">
         <div class="p-4">
             <h2 class="text-xl font-bold text-teal-600">Menu</h2>
@@ -71,7 +94,6 @@ $stmt = $pubModel->readAll();
         </div>
     </div>
 
-    <!-- Main content -->
     <div class="flex-1 p-4 md:p-8 bg-slate-50">
             <div class="max-w-7xl mx-auto">
                 <?php if (isset($_GET['error']) && $_GET['error'] == 'comment'): ?>
@@ -117,6 +139,14 @@ $stmt = $pubModel->readAll();
                     <div class="px-6 pb-4">
                         <h2 class="text-xl font-bold mb-2"><?= htmlspecialchars($row['titre']) ?></h2>
                         <p class="text-gray-600"><?= nl2br(htmlspecialchars($row['contenu'])) ?></p>
+                        <div class="mt-4 flex items-center gap-4">
+                            <form method="POST" class="inline">
+                                <input type="hidden" name="id_pub" value="<?= $row['id_pub'] ?>">
+                                <button name="like" class="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+                                    <i class="fas fa-heart"></i> J'aime (<?= $row['likes'] ?? 0 ?>)
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
                     <?php if (!empty($row['image'])): ?>
@@ -159,7 +189,7 @@ $stmt = $pubModel->readAll();
                             <?php endwhile; ?>
                         </div>
 
-                        <form method="POST" class="flex flex-col gap-2">
+                        <form method="POST" class="flex flex-col gap-2" onsubmit="return validateComment(this)">
                             <input type="hidden" name="id_pub" value="<?= $row['id_pub'] ?>">
                             <div class="flex gap-2">
                                 <input type="text" name="com_nom" placeholder="Nom" class="w-1/4 p-2 text-sm bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-teal-500">
@@ -170,7 +200,7 @@ $stmt = $pubModel->readAll();
                     </div>
                 </div>
             <?php endwhile; ?>
-                        </div>  <!-- space-y-8 -->
+                        </div>
                     </div>
 
                     <div class="space-y-6">
@@ -179,18 +209,41 @@ $stmt = $pubModel->readAll();
                             <p class="text-gray-600 leading-relaxed">Ici vous pouvez consulter les dernières publications, ajouter un nouveau post et voir les commentaires de la communauté.</p>
                         </div>
                     </div>
-                </div> <!-- grid -->
-            </div>  <!-- max-w-7xl mx-auto -->
-        </div>  <!-- flex-1 p-4 md:p-8 -->
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 <script>
 function editComment(id) {
     document.getElementById('text-' + id).classList.add('hidden');
     document.getElementById('form-' + id).classList.remove('hidden');
 }
+
 function cancelEdit(id) {
     document.getElementById('text-' + id).classList.remove('hidden');
     document.getElementById('form-' + id).classList.add('hidden');
+}
+
+function validateComment(form) {
+    const nomInput = form.querySelector('input[name="com_nom"]');
+    const textInput = form.querySelector('input[name="com_text"]');
+    const nom = nomInput.value.trim();
+    const text = textInput.value.trim();
+    
+    if (!nom) {
+        alert('Le nom est requis.');
+        nomInput.focus();
+        return false;
+    }
+    
+    if (!text) {
+        alert('Le commentaire ne peut pas être vide.');
+        textInput.focus();
+        return false;
+    }
+    
+    return true;
 }
 </script>
 </html>

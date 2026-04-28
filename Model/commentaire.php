@@ -1,5 +1,4 @@
 <?php
-// model/Commentaire.php
 class Commentaire {
     private $conn;
     private $table_name = "commentaires";

@@ -32,7 +32,9 @@ if (isset($_GET['id'])) {
             </div>
         <?php endif; ?>
 
-        <form action="" method="POST" enctype="multipart/form-data" class="space-y-4">
+        <div id="errorMessage" style="display:none;" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
+
+        <form id="publicationForm" action="" method="POST" enctype="multipart/form-data" class="space-y-4" onsubmit="return validatePublication()">
             <input type="hidden" name="id_client" value="<?= $editMode ? $publicationData['id_client'] : '1' ?>">
             <?php if($editMode): ?>
                 <input type="hidden" name="existing_images" value="<?= $publicationData['image'] ?>">
@@ -40,23 +42,23 @@ if (isset($_GET['id'])) {
 
             <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1">Titre</label>
-                <input type="text" name="titre" value="<?= $editMode ? htmlspecialchars($publicationData['titre']) : '' ?>" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
+                <input type="text" id="titre" name="titre" value="<?= $editMode ? htmlspecialchars($publicationData['titre']) : '' ?>" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
             </div>
             <div>
-    <label class="block text-sm font-medium text-gray-600 mb-1">Votre Nom</label>
-    <input type="text" name="nom_utilisateur" 
-           placeholder="Entrez votre nom"
-           class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
-</div>
+                <label class="block text-sm font-medium text-gray-600 mb-1">Votre Nom</label>
+                <input type="text" id="nom_utilisateur" name="nom_utilisateur" 
+                       placeholder="Entrez votre nom"
+                       class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none">
+            </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1">Message</label>
-                <textarea name="contenu" rows="4" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"><?= $editMode ? htmlspecialchars($publicationData['contenu']) : '' ?></textarea>
+                <textarea id="contenu" name="contenu" rows="4" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none"><?= $editMode ? htmlspecialchars($publicationData['contenu']) : '' ?></textarea>
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-600 mb-1">Photos</label>
-                <input type="file" name="images[]" multiple id="image-upload" class="hidden" accept="image/*">
+                <input type="file" name="images[]" multiple id="image-upload" class="hidden">
                 <label for="image-upload" class="flex flex-col items-center justify-center w-full p-6 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:bg-teal-50 transition-all">
                     <span class="text-gray-500 text-sm">Ajouter des photos</span>
                 </label>
@@ -78,9 +80,37 @@ if (isset($_GET['id'])) {
     </div>
 
     <script>
+        function validatePublication() {
+            const titre = document.getElementById('titre').value.trim();
+            const nomUtilisateur = document.getElementById('nom_utilisateur').value.trim();
+            const contenu = document.getElementById('contenu').value.trim();
+            const errorDiv = document.getElementById('errorMessage');
+            
+            if (!titre) {
+                errorDiv.textContent = 'Le titre est requis.';
+                errorDiv.style.display = 'block';
+                return false;
+            }
+            
+            if (!nomUtilisateur) {
+                errorDiv.textContent = 'Le nom d\'utilisateur est requis.';
+                errorDiv.style.display = 'block';
+                return false;
+            }
+            
+            if (!contenu) {
+                errorDiv.textContent = 'Le contenu est requis.';
+                errorDiv.style.display = 'block';
+                return false;
+            }
+            
+            errorDiv.style.display = 'none';
+            return true;
+        }
+        
         document.getElementById('image-upload').addEventListener('change', function(e) {
             const preview = document.getElementById('preview');
-            preview.innerHTML = ''; // Efface l'ancien aperçu lors de la sélection de nouveaux fichiers
+            preview.innerHTML = '';
             Array.from(e.target.files).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = (event) => {

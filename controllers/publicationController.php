@@ -1,22 +1,22 @@
 <?php
-// controllers/PublicationController.php
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../Model/publication.php';
 
 class PublicationController {
     
+    private $db;
+
     public function handleRequest() {
         $database = new Database();
-        $db = $database->getConnection();
-        $publication = new Publication($db);
+        $this->db = $database->getConnection();
+        $publication = new Publication($this->db);
         $error = "";
 
-        // SUPPRESSION
         if (isset($_POST['delete_id'])) {
             $id = $_POST['delete_id'];
             $publication->id_pub = $id;
             
-            $stmt = $db->prepare("SELECT image FROM publications WHERE id_pub = ?");
+            $stmt = $this->db->prepare("SELECT image FROM publications WHERE id_pub = ?");
             $stmt->execute([$id]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($row && !empty($row['image'])) {
@@ -33,7 +33,6 @@ class PublicationController {
             }
         }
 
-        // CRÉATION / MODIFICATION
         if (isset($_POST['submit_pub'])) {
             $nom_saisi = trim($_POST['nom_utilisateur'] ?? '');
             if (empty($nom_saisi)) {
@@ -79,5 +78,13 @@ class PublicationController {
             }
         }
         return $error;
+    }
+
+    public function handleLike($id_pub) {
+        $publication = new Publication($this->db);
+        $publication->id_pub = $id_pub;
+        $publication->incrementLike();
+        header("Location: " . $_SERVER['REQUEST_URI']);
+        exit();
     }
 }

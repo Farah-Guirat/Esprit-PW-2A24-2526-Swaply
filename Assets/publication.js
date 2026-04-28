@@ -1,8 +1,4 @@
-// assets/js/publication.js
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('✅ Swaply Publications loaded with advanced UI');
-
-    // Compteur de caractères dans le textarea
     const textarea = document.querySelector('textarea[name="contenu"]');
     if (textarea) {
         const counter = document.createElement('div');
@@ -20,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
         updateCounter();
     }
 
-    // Animation d’entrée des cartes (en plus de main.js)
+
     const cards = document.querySelectorAll('.card-hover');
     cards.forEach((card, i) => {
         card.style.opacity = '0';

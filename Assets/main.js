@@ -21,7 +21,6 @@ function showPage(page) {
   home.classList.add('hidden');
   other.classList.remove('hidden');
 
-  // contenu dynamique
   let content = "";
 
   switch(page) {
@@ -44,7 +43,6 @@ function showPage(page) {
 
       <input type="file" id="imageUpload" multiple accept="image/*" onchange="previewImages(event)">
 
-      <!-- PREVIEW -->
       <div id="preview" class="preview-container"></div>
 
       <button onclick="submitPost()">Publier</button>
@@ -91,7 +89,7 @@ function submitPost() {
 }
 function previewImages(event) {
   const preview = document.getElementById("preview");
-  preview.innerHTML = ""; // reset
+  preview.innerHTML = "";
 
   const files = event.target.files;
 

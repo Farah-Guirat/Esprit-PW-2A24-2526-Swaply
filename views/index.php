@@ -5,13 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Swaply - Accueil</title>
   
-  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   
-  <!-- Custom CSS -->
   <link rel="stylesheet" href="assets/css/style.css">
   
   <style>
@@ -22,7 +19,6 @@
 </head>
 <body>
 
-  <!-- Header -->
   <div class="bg-white shadow-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -49,7 +45,7 @@
 
   <div class="max-w-7xl mx-auto px-8 py-10">
 
-    <!-- Hero Section -->
+
     <div class="hero-bg rounded-3xl p-12 text-white mb-12">
       <div class="max-w-2xl">
         <h2 class="text-5xl font-bold leading-tight">Échangez, collaborez et développez<br>vos projets ensemble</h2>
@@ -65,7 +61,6 @@
       </div>
     </div>
 
-    <!-- Nos sections -->
     <h2 class="text-2xl font-semibold text-gray-800 mb-6">Nos sections</h2>
     
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -116,7 +111,6 @@
 
   </div>
 
-  <!-- Custom JS -->
   <script src="assets/js/main.js"></script>
 </body>
 </html>

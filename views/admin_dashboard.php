@@ -1,9 +1,7 @@
 <?php
-// views/admin_dashboard.php
 require_once '../controllers/AdminController.php';
 $adminCtrl = new AdminController();
 
-// Handle actions
 if (isset($_POST['delete_pub'])) {
     $adminCtrl->deleteAction($_POST['delete_pub']);
     header("Location: admin_dashboard.php");
@@ -30,7 +28,8 @@ if (isset($_POST['delete_selected_comments'])) {
     exit();
 }
 
-$data = $adminCtrl->getDashboardData();
+$sortLikes = isset($_GET['sort_likes']) ? $_GET['sort_likes'] : 'date';
+$data = $adminCtrl->getDashboardData($sortLikes);
 ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html lang="fr">
@@ -40,7 +39,6 @@ $data = $adminCtrl->getDashboardData();
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-50 text-gray-800 min-h-screen flex">
-    <!-- Sidebar -->
     <div class="w-64 bg-white shadow-lg min-h-screen">
         <div class="p-4">
             <h2 class="text-xl font-bold text-teal-600">Menu Admin</h2>
@@ -52,7 +50,6 @@ $data = $adminCtrl->getDashboardData();
         </div>
     </div>
 
-    <!-- Main content -->
     <div class="flex-1 p-4 md:p-8">
         <div class="max-w-6xl mx-auto">
             <h1 class="text-3xl font-bold mb-8 text-teal-600">Tableau de Bord Admin</h1>
@@ -66,6 +63,10 @@ $data = $adminCtrl->getDashboardData();
                     <p class="text-gray-600 font-medium">Total Commentaires</p>
                     <h2 class="text-5xl font-bold text-gray-800"><?= $data['total_coms'] ?></h2>
                 </div>
+                <div class="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
+                    <p class="text-gray-600 font-medium">Total Likes</p>
+                    <h2 class="text-5xl font-bold text-gray-800"><?= $data['total_likes'] ?></h2>
+                </div>
             </div>
 
             <div class="bg-white rounded-3xl border border-gray-200 overflow-hidden mb-10">
@@ -78,6 +79,7 @@ $data = $adminCtrl->getDashboardData();
                             <th class="p-4">Auteur</th>
                             <th class="p-4">Titre</th>
                             <th class="p-4">Images</th>
+                            <th class="p-4">Likes</th>
                             <th class="p-4">Date</th>
                             <th class="p-4 text-right">Actions</th>
                         </tr>
@@ -98,11 +100,17 @@ $data = $adminCtrl->getDashboardData();
                                     <span class="text-gray-400">Aucune</span>
                                 <?php endif; ?>
                             </td>
+                            <td class="p-4">
+                                <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full font-bold">
+                                    <i class="fas fa-heart"></i> <?= $pub['likes'] ?? 0 ?>
+                                </span>
+                            </td>
                             <td class="p-4 text-gray-600 text-sm"><?= $pub['date_pub'] ?></td>
                             <td class="p-4 text-right">
+                                <a href="stats.php?id=<?= $pub['id_pub'] ?>" class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 mr-2">Statistiques</a>
                                 <form method="POST" class="inline" onsubmit="return confirm('Supprimer cette publication ?');">
                                     <input type="hidden" name="delete_pub" value="<?= $pub['id_pub'] ?>">
-                                    <button type="submit" class="text-rose-500 hover:underline">Supprimer</button>
+                                    <button type="submit" class="bg-rose-500 text-white px-3 py-1 rounded text-sm hover:bg-rose-600">Supprimer</button>
                                 </form>
                             </td>
                         </tr>
@@ -111,9 +119,10 @@ $data = $adminCtrl->getDashboardData();
                 </table>
             </div>
 
-            <div class="bg-white rounded-3xl border border-gray-200 overflow-hidden">
+            <div class="bg-white rounded-3xl border border-gray-200 overflow-hidden mb-10">
                 <div class="p-6 border-b border-gray-200">
                     <h3 class="text-xl font-bold">Gestion des Commentaires</h3>
+                    <p class="text-sm text-gray-600 mt-1">Triés par date</p>
                 </div>
                 <form method="POST">
                     <table class="w-full text-left">
@@ -150,6 +159,43 @@ $data = $adminCtrl->getDashboardData();
                         <button type="submit" name="delete_selected_comments" class="bg-rose-600 text-white px-4 py-2 rounded hover:bg-rose-700" onclick="return confirm('Supprimer les commentaires sélectionnés ?')">Supprimer Sélectionnés</button>
                     </div>
                 </form>
+            </div>
+
+            <div class="bg-white rounded-3xl border border-gray-200 overflow-hidden mt-10">
+                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-xl font-bold">Gestion des Likes</h3>
+                    <a href="?sort_likes=<?= $sortLikes === 'date' ? 'likes' : 'date' ?>" class="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-600">Trier par <?= $sortLikes === 'date' ? 'Likes' : 'Date' ?></a>
+                </div>
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 text-gray-600 text-sm">
+                        <tr>
+                            <th class="p-4">Utilisateur</th>
+                            <th class="p-4">Publication</th>
+                            <th class="p-4">Nombre de Likes</th>
+                            <th class="p-4">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <?php if (!empty($data['all_likes'])): ?>
+                            <?php foreach ($data['all_likes'] as $like): ?>
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="p-4 font-bold text-teal-600"><?= htmlspecialchars($like['nom']) ?></td>
+                                <td class="p-4"><?= htmlspecialchars($like['titre']) ?></td>
+                                <td class="p-4">
+                                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full font-bold">
+                                        <i class="fas fa-heart"></i> <?= $like['likes'] ?>
+                                    </span>
+                                </td>
+                                <td class="p-4 text-gray-600 text-sm"><?= $like['date_pub'] ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="4" class="p-4 text-center text-gray-500">Aucune publication avec des likes</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

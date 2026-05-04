@@ -1,3 +1,58 @@
+<?php
+session_start();
+$captchaA = rand(1, 9);
+$captchaB = rand(1, 9);
+$captchaOperators = ['+', '-', '*'];
+$captchaOperator = $captchaOperators[array_rand($captchaOperators)];
+$captchaQuestion = "Quel est $captchaA $captchaOperator $captchaB ?";
+switch ($captchaOperator) {
+    case '+':
+        $captchaAnswer = $captchaA + $captchaB;
+        break;
+    case '-':
+        $captchaAnswer = $captchaA - $captchaB;
+        break;
+    default:
+        $captchaAnswer = $captchaA * $captchaB;
+        break;
+}
+$_SESSION['captcha_answer_register'] = $captchaAnswer;
+
+$errorMessage = '';
+if (isset($_GET['error'])) {
+    switch ($_GET['error']) {
+        case 'empty':
+            $errorMessage = 'Tous les champs sont obligatoires.';
+            break;
+        case 'email':
+            $errorMessage = 'Adresse email invalide.';
+            break;
+        case 'captcha':
+            $errorMessage = 'Captcha incorrect.';
+            break;
+        case 'duplicate':
+            $errorMessage = 'Cette adresse email est déjà utilisée.';
+            break;
+        case 'verification_failed':
+            $errorMessage = 'Erreur lors de l\'envoi de l\'email de vérification.';
+            break;
+        default:
+            $errorMessage = 'Erreur inconnue.';
+    }
+}
+
+$verificationSent = false;
+$verificationEmail = '';
+if (isset($_GET['verification_sent']) && $_GET['verification_sent'] === '1') {
+    $verificationSent = true;
+    $verificationEmail = isset($_GET['email']) ? $_GET['email'] : '';
+}
+
+$rejectionMessage = false;
+if (isset($_GET['rejected']) && $_GET['rejected'] === '1') {
+    $rejectionMessage = true;
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -197,6 +252,35 @@
       text-decoration: underline;
     }
 
+    .verification-message {
+      background: #d1ecf1;
+      border: 1px solid #4FD1C5;
+      border-radius: 8px;
+      padding: 16px 14px;
+      margin-bottom: 20px;
+      color: #0c5460;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .verification-message .email {
+      color: #4FD1C5;
+      font-weight: 700;
+      display: block;
+      margin-top: 8px;
+    }
+
+    .rejection-message {
+      background: #f8d7da;
+      border: 1px solid #dc3545;
+      border-radius: 8px;
+      padding: 16px 14px;
+      margin-bottom: 20px;
+      color: #721c24;
+      text-align: center;
+      font-weight: 600;
+    }
+
     @media (max-width: 480px) {
       .row2 { flex-direction: column; gap: 0; }
       .card { padding: 24px 18px; }
@@ -238,6 +322,23 @@
   <div class="card-wrap">
     <div class="card">
 
+      <?php if ($verificationSent): ?>
+        <div class="verification-message">
+          ✓ Un email de vérification est envoyé à<br>
+          <span class="email"><?= htmlspecialchars($verificationEmail) ?></span>
+          <p style="margin-top: 12px; font-size: 12px; font-weight: 400;">
+            Veuillez cliquer sur le lien dans l'email pour confirmer votre compte.<br>
+            Le lien est valide pendant 24 heures.
+          </p>
+        </div>
+      <?php endif; ?>
+
+      <?php if ($rejectionMessage): ?>
+        <div class="rejection-message">
+          ✗ Veuillez vérifier vos informations
+        </div>
+      <?php endif; ?>
+
       <?php if (isset($_GET['error'])): ?>
         <p id="server-error-msg" style="color:red; margin-bottom:16px; font-weight:700;">
           <?php if ($_GET['error'] === 'empty'): ?>
@@ -246,6 +347,8 @@
             Format email invalide.
           <?php elseif ($_GET['error'] === 'duplicate'): ?>
             Cette adresse e-mail existe déjà.
+          <?php elseif ($_GET['error'] === 'captcha'): ?>
+            Réponse au captcha incorrecte.
           <?php else: ?>
             Une erreur s'est produite. Réessayez.
           <?php endif; ?>
@@ -294,8 +397,15 @@
       <label class="form-label">Password</label>
       <input class="form-input" type="password" name="password" id="password" placeholder="Your password" />
 
+      <label class="form-label">Captcha de sécurité</label>
+      <input class="form-input" type="text" name="captcha" id="captcha" placeholder="<?= htmlspecialchars($captchaQuestion) ?>" />
+      <p id="face-msg" style="color:#16a34a; margin-bottom:10px; font-size:13px;"></p>
       <p id="error-msg" style="color:red; margin-bottom:10px;"></p>
 
+      <input type="hidden" name="face_credential_id" id="face_credential_id" value="" />
+      <input type="hidden" name="face_pubkey" id="face_pubkey_input" value="" />
+      <input type="hidden" name="face_sign_count" id="face_sign_count_input" value="0" />
+      <button type="button" class="btn-signup" style="background: #2d3748; margin-bottom: 12px;" onclick="saveFaceId()">Save Code / Finger Print</button>
       <button type="submit" name="signup" class="btn-signup">SIGN UP</button>
 
 
@@ -309,6 +419,89 @@
 
 
   <script>
+function arrayBufferToBase64Url(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    bytes.forEach((b) => binary += String.fromCharCode(b));
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlToBuffer(base64url) {
+    const padding = '==='.slice(0, (4 - (base64url.length % 4)) % 4);
+    const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/') + padding;
+    const str = atob(base64);
+    const buffer = new ArrayBuffer(str.length);
+    const view = new Uint8Array(buffer);
+    for (let i = 0; i < str.length; i++) {
+        view[i] = str.charCodeAt(i);
+    }
+    return buffer;
+}
+
+async function saveFaceId() {
+    const faceMsg = document.getElementById('face-msg');
+    faceMsg.textContent = 'Préparation du Code / Empreinte...';
+
+    try {
+        const response = await fetch('../../controller/WebAuthnC.php?action=registerOptions');
+        const data = await response.json();
+        if (data.status !== 'ok') {
+            faceMsg.textContent = 'Impossible de récupérer les options Code / Empreinte.';
+            return;
+        }
+
+        const publicKey = data.publicKey;
+        publicKey.challenge = base64UrlToBuffer(publicKey.challenge);
+        publicKey.user.id = base64UrlToBuffer(publicKey.user.id);
+
+        const credential = await navigator.credentials.create({ publicKey });
+        console.log('Credential created:', credential);
+        console.log('Credential type:', credential.type);
+        console.log('Authenticator attachment:', credential.authenticatorAttachment);
+        if (!credential) {
+            faceMsg.textContent = 'Création du Code / Empreinte annulée.';
+            return;
+        }
+
+        const attestationObject = arrayBufferToBase64Url(credential.response.attestationObject);
+        const clientDataJSON = arrayBufferToBase64Url(credential.response.clientDataJSON);
+        const credentialId = arrayBufferToBase64Url(credential.rawId);
+
+        const verifyResponse = await fetch('../../controller/WebAuthnC.php?action=verifyRegistration', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                attestationObject,
+                clientDataJSON,
+            }),
+        });
+
+        const verifyData = await verifyResponse.json();
+        if (verifyData.status !== 'ok') {
+            faceMsg.textContent = 'Échec de l’enregistrement : ' + (verifyData.message || 'Erreur inconnue');
+            return;
+        }
+
+        localStorage.setItem('swaply_face_id', credentialId);
+
+        // Remplir les champs cachés pour les transmettre avec le formulaire
+        document.getElementById('face_credential_id').value = verifyData.credentialId || credentialId;
+        if (verifyData.publicKeyPem) {
+            document.getElementById('face_pubkey_input').value = verifyData.publicKeyPem;
+        }
+        if (verifyData.signCount !== undefined) {
+            document.getElementById('face_sign_count_input').value = verifyData.signCount;
+        }
+
+        faceMsg.textContent = 'Code / Empreinte enregistré avec succès. Vous pourrez vous connecter avec Code / Empreinte.';
+    } catch (error) {
+        faceMsg.textContent = 'Erreur : ' + error.message;
+    }
+}
+
+window.onload = function() {
+};
+
 function validateSignup() {
 
     let firstname = document.getElementById("firstname").value.trim();
@@ -318,6 +511,7 @@ function validateSignup() {
     let phone = document.getElementById("phone").value.trim();
     let dateNaissance = document.getElementById("date_naissance").value.trim();
     let gender = document.getElementById("gender").value;
+    let captcha = document.getElementById("captcha").value.trim();
 
     let errorMsg = document.getElementById("error-msg");
 
@@ -336,6 +530,11 @@ function validateSignup() {
 
     if (phone.length > 12 || !/^[0-9]+$/.test(phone)) {
         errorMsg.innerHTML = "Numéro de téléphone invalide.";
+        return false;
+    }
+
+    if (captcha === "" || !/^-?\d+$/.test(captcha)) {
+        errorMsg.innerHTML = "Veuillez répondre au captcha avec un nombre valide.";
         return false;
     }
 

@@ -1,3 +1,23 @@
+<?php
+session_start();
+$captchaA = rand(1, 9);
+$captchaB = rand(1, 9);
+$captchaOperators = ['+', '-', '*'];
+$captchaOperator = $captchaOperators[array_rand($captchaOperators)];
+$captchaQuestion = "Quel est $captchaA $captchaOperator $captchaB ?";
+switch ($captchaOperator) {
+    case '+':
+        $captchaAnswer = $captchaA + $captchaB;
+        break;
+    case '-':
+        $captchaAnswer = $captchaA - $captchaB;
+        break;
+    default:
+        $captchaAnswer = $captchaA * $captchaB;
+        break;
+}
+$_SESSION['captcha_answer_login'] = $captchaAnswer;
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -232,15 +252,22 @@
     <label class="form-label">Password</label>
     <input class="form-input" type="password" name="password" id="password" placeholder="Your password" />
 
-    <!-- Forgot Password -->
+
+
+    <label class="form-label">Captcha de sécurité</label>
+    <input class="form-input" type="text" name="captcha" id="captcha" placeholder="<?= htmlspecialchars($captchaQuestion) ?>" />
+
+    <p id="error-msg" style="color:red; margin-bottom:10px;"></p>
+
+    <button type="button" class="btn-signin" style="background: #2d3748; margin-bottom: 12px;" onclick="submitFaceLogin()">Code / Finger Print</button>
+
+   <!-- Forgot Password -->
     <div style="text-align: right; margin-top: -12px; margin-bottom: 20px;">
-        <a href="forgot_password.php"
+        <a href="forgot-password.php"
            style="font-size: 12px; color: #4FD1C5; text-decoration: underline; font-weight: 600;">
             Forgot password?
         </a>
     </div>
-
-    <p id="error-msg" style="color:red; margin-bottom:10px;"></p>
 
     <button type="submit" name="login" class="btn-signin">SIGN IN</button>
 
@@ -270,14 +297,34 @@
   </div>
 
 <script>
+function arrayBufferToBase64Url(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    bytes.forEach((b) => binary += String.fromCharCode(b));
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlToBuffer(base64url) {
+    const padding = '==='.slice(0, (4 - (base64url.length % 4)) % 4);
+    const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/') + padding;
+    const str = atob(base64);
+    const buffer = new ArrayBuffer(str.length);
+    const view = new Uint8Array(buffer);
+    for (let i = 0; i < str.length; i++) {
+        view[i] = str.charCodeAt(i);
+    }
+    return buffer;
+}
+
 function validateLogin() {
     let email = document.getElementById("email").value.trim();
     let password = document.getElementById("password").value.trim();
+    let captcha = document.getElementById("captcha").value.trim();
     let errorMsg = document.getElementById("error-msg");
 
     errorMsg.innerHTML = "";
 
-    if (email === "" || password === "") {
+    if (email === "" || password === "" || captcha === "") {
         errorMsg.innerHTML = "Veuillez remplir tous les champs.";
         return false;
     }
@@ -288,9 +335,79 @@ function validateLogin() {
         return false;
     }
 
+    if (!/^-?\d+$/.test(captcha)) {
+        errorMsg.innerHTML = "Le captcha doit être un nombre.";
+        return false;
+    }
+
     return true;
 }
 
+async function submitFaceLogin() {
+    let faceId = localStorage.getItem('swaply_face_id');
+    let email = document.getElementById('email').value.trim();
+    let errorMsg = document.getElementById("error-msg");
+    errorMsg.innerHTML = "";
+
+    let queryParams = '';
+    if (faceId) {
+        queryParams = `face_id=${encodeURIComponent(faceId)}`;
+    } else if (email) {
+        queryParams = `email=${encodeURIComponent(email)}`;
+    } else {
+        errorMsg.innerHTML = "Aucun Face ID enregistré. Entrez votre email ou utilisez Save Face ID dans l'inscription.";
+        return false;
+    }
+
+    try {
+        const response = await fetch(`../../controller/WebAuthnC.php?action=authenticateOptions&${queryParams}`);
+        const data = await response.json();
+        if (data.status !== 'ok') {
+            errorMsg.innerHTML = data.message || 'Impossible de lancer Face ID.';
+            return false;
+        }
+
+        const publicKey = data.publicKey;
+        publicKey.challenge = base64UrlToBuffer(publicKey.challenge);
+        publicKey.allowCredentials = publicKey.allowCredentials.map(cred => ({
+            type: cred.type,
+            id: base64UrlToBuffer(cred.id),
+        }));
+
+        const assertion = await navigator.credentials.get({ publicKey });
+        if (!assertion) {
+            errorMsg.innerHTML = 'Face ID annulé.';
+            return false;
+        }
+
+        const authData = arrayBufferToBase64Url(assertion.response.authenticatorData);
+        const clientDataJSON = arrayBufferToBase64Url(assertion.response.clientDataJSON);
+        const signature = arrayBufferToBase64Url(assertion.response.signature);
+        const credentialId = arrayBufferToBase64Url(assertion.rawId);
+
+        const verifyResponse = await fetch('../../controller/WebAuthnC.php?action=verifyAuthentication', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                credentialId,
+                authenticatorData: authData,
+                clientDataJSON,
+                signature,
+            }),
+        });
+
+        const verifyData = await verifyResponse.json();
+        if (verifyData.status !== 'ok') {
+            errorMsg.innerHTML = verifyData.message || 'Échec de la connexion Face ID.';
+            return false;
+        }
+
+        window.location.href = verifyData.redirect;
+    } catch (error) {
+        errorMsg.innerHTML = 'Erreur Face ID : ' + error.message;
+        return false;
+    }
+}
 
 window.onload = function() {
     let params = new URLSearchParams(window.location.search);
@@ -298,8 +415,11 @@ window.onload = function() {
 
     if (params.get("error") == "1") {
         errorMsg.innerHTML = "Veuillez vérifier les informations de connexion.";
+    } else if (params.get("error") == "captcha") {
+        errorMsg.innerHTML = "Réponse au captcha incorrecte.";
+    }
 
-        // نحيو error من URL (باش ما يعاودش يطلع)
+    if (params.get("error")) {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 };

@@ -9,13 +9,44 @@ class User {
         $this->conn = $conn;
     }
 
+    private function normalizeFaceId(string $faceId): string {
+        return rtrim(strtr($faceId, '+/', '-_'), '=');
+    }
+
+    private function alternateFaceId(string $faceId): string {
+        return rtrim(strtr($faceId, '-_', '+/'), '=');
+    }
+
+    private function padBase64(string $base64): string {
+        $padding = 4 - (strlen($base64) % 4);
+        if ($padding < 4) {
+            $base64 .= str_repeat('=', $padding);
+        }
+        return $base64;
+    }
+
+    private function faceIdVariants(string $faceId): array {
+        $normalized = $this->normalizeFaceId($faceId);
+        $alternate = $this->alternateFaceId($faceId);
+        return [
+            $normalized,
+            $alternate,
+            $this->padBase64($normalized),
+            $this->padBase64($alternate),
+        ];
+    }
+
     // ✔ REGISTER (use this only)
-    public function register($nom, $prenom, $email, $password, $genre, $telephone, $date_naissance) {
+    public function register($nom, $prenom, $email, $password, $genre, $telephone, $date_naissance, $face_id = null) {
+        // Check if email already exists
+        if ($this->getUserByEmail($email)) {
+            throw new Exception("L'email est déjà utilisé.");
+        }
 
         $sql = "INSERT INTO utilisateurs
-        (nom, prenom, email, password, genre, telephone, date_naissance, banned)
+        (nom, prenom, email, password, genre, telephone, date_naissance, photo, face_id, banned)
         VALUES 
-        (:nom, :prenom, :email, :password, :genre, :telephone, :date_naissance, 0)";
+        (:nom, :prenom, :email, :password, :genre, :telephone, :date_naissance, NULL, :face_id, 0)";
 
         $stmt = $this->conn->prepare($sql);
 
@@ -26,6 +57,7 @@ class User {
         $stmt->bindParam(':genre', $genre);
         $stmt->bindParam(':telephone', $telephone);
         $stmt->bindParam(':date_naissance', $date_naissance);
+        $stmt->bindParam(':face_id', $face_id);
 
         return $stmt->execute();
     }
@@ -46,6 +78,71 @@ class User {
         }
 
         return false;
+    }
+
+    public function getUserByEmail($email)
+    {
+        $sql = "SELECT * FROM utilisateurs WHERE email = :email";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':email', $email);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function loginByFaceId($face_id)
+    {
+        $variants = $this->faceIdVariants($face_id);
+
+        $sql = "SELECT * FROM utilisateurs WHERE face_id IN (:face_id, :face_id_alt, :face_id_pad, :face_id_alt_pad)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':face_id', $variants[0]);
+        $stmt->bindParam(':face_id_alt', $variants[1]);
+        $stmt->bindParam(':face_id_pad', $variants[2]);
+        $stmt->bindParam(':face_id_alt_pad', $variants[3]);
+        $stmt->execute();
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user && (!isset($user['banned']) || $user['banned'] == 0)) {
+            return $user;
+        }
+
+        return false;
+    }
+
+    public function getUserByCredentialId($credentialId)
+    {
+        $variants = $this->faceIdVariants($credentialId);
+
+        $sql = "SELECT * FROM utilisateurs WHERE face_id IN (:face_id, :face_id_alt, :face_id_pad, :face_id_alt_pad)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':face_id', $variants[0]);
+        $stmt->bindParam(':face_id_alt', $variants[1]);
+        $stmt->bindParam(':face_id_pad', $variants[2]);
+        $stmt->bindParam(':face_id_alt_pad', $variants[3]);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function saveWebAuthnCredential($userId, $credentialId, $publicKeyPem, $signCount)
+    {
+        $sql = "UPDATE utilisateurs SET face_id = :face_id, face_pubkey = :face_pubkey, face_sign_count = :face_sign_count WHERE id_u = :id_u";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':face_id', $credentialId);
+        $stmt->bindParam(':face_pubkey', $publicKeyPem);
+        $stmt->bindParam(':face_sign_count', $signCount, PDO::PARAM_INT);
+        $stmt->bindParam(':id_u', $userId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    public function updateFaceSignCount($userId, $signCount)
+    {
+        $sql = "UPDATE utilisateurs SET face_sign_count = :face_sign_count WHERE id_u = :id_u";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':face_sign_count', $signCount, PDO::PARAM_INT);
+        $stmt->bindParam(':id_u', $userId, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     public function getAllUsersExceptAdmin($adminEmail, $searchTerm = '')
@@ -131,6 +228,16 @@ class User {
         $stmt = $this->conn->prepare($sql);
 
         return $stmt->execute([$nom, $prenom, $email, $telephone, $date_naissance, $id]);
+    }
+
+    public function updatePasswordByEmail($email, $password)
+    {
+        $sql = "UPDATE utilisateurs SET password = :password WHERE email = :email";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':password', $password);
+        $stmt->bindParam(':email', $email);
+
+        return $stmt->execute();
     }
 
     public function updatePhoto($id, $photo)

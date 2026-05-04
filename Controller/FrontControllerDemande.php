@@ -223,7 +223,7 @@ private function sendMail($to, $subject, $body) {
         $mail->SMTPAuth = true;
 
         $mail->Username = 'neodrive76@gmail.com';
-        $mail->Password = 'ovos fjfr lhvu wzig';
+        $mail->Password = '';
 
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;

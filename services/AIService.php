@@ -2,7 +2,7 @@
 
 class AIService
 {
-    private static string $apiKey = "AIzaSyCR1ZWgYTrapFEHTn0DFKHe37YhHxaN-Jk";
+    private static string $apiKey = "";
 
     /* =========================
         1. GET EMBEDDING (Gemini)

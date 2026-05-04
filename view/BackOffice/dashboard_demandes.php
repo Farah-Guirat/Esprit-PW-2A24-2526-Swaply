@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
     <style>
         .stat-card {
@@ -80,6 +81,13 @@
         <i class="fa-solid fa-download"></i>
         Exporter
     </button>
+
+    <button onclick="openStatsModal()" 
+            class="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-5 py-2.5 rounded-2xl text-sm font-semibold hover:shadow-lg hover:shadow-emerald-500/30 transition-all active:scale-95">
+            <i class="fa-solid fa-chart-pie"></i>
+            Statistiques
+        </button>
+    
 </div>
 
 <div class="w-full flex justify-start">
@@ -90,34 +98,86 @@
     </a>
 </div>
 
+<!-- MODAL STATISTIQUES -  GRAPH  -->
+<div id="statsModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[60] backdrop-blur-sm">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-6xl w-full mx-4 max-h-[94vh] overflow-hidden flex flex-col">
+        
+        <!-- Header -->
+        <div class="px-8 py-6 border-b flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
+            <div class="flex items-center gap-4">
+                <div class="w-11 h-11 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl">
+                    📊
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Statistiques des Demandes</h2>
+                    <p class="text-gray-500 text-sm">Analyse visuelle en temps réel</p>
+                </div>
+            </div>
+            <button onclick="closeStatsModal()" 
+                    class="w-11 h-11 flex items-center justify-center text-3xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-2xl transition-all">
+                ×
+            </button>
+        </div>
+
+        <!-- Body avec Graphs -->
+        <div class="p-8 flex-1 overflow-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                <!-- Graph 1 : Doughnut -->
+                <div class="bg-white border border-gray-100 rounded-3xl p-7 shadow-sm">
+                    <h3 class="text-lg font-semibold mb-6 text-gray-700">Répartition par Statut</h3>
+                    <div class="h-80">
+                        <canvas id="doughnutChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Graph 2 : Bar Chart -->
+                <div class="bg-white border border-gray-100 rounded-3xl p-7 shadow-sm">
+                    <h3 class="text-lg font-semibold mb-6 text-gray-700">Comparaison des Demandes</h3>
+                    <div class="h-80">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Graph 3 : Horizontal Bar (optionnel mais très beau) -->
+                <div class="lg:col-span-2 bg-white border border-gray-100 rounded-3xl p-7 shadow-sm">
+                    <h3 class="text-lg font-semibold mb-6 text-gray-700">Vue détaillée des Statuts</h3>
+                    <div class="h-80">
+                        <canvas id="horizontalChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-8 py-5 border-t text-xs text-gray-400 text-center bg-gray-50 rounded-b-3xl">
+            JobBoard Admin • Statistiques générées le <?= date('d/m/Y à H:i') ?>
+        </div>
+    </div>
+</div>
+
+
 
     <!-- STATS -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <div class="stat-card bg-white p-6 rounded-2xl shadow">
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-gray-500 text-sm">Total des offres</p>
+                    <p class="text-gray-500 text-sm">Total des demandes</p>
                     <h2 class="text-4xl font-bold text-gray-800 mt-2"><?= $stats['total'] ?? 0 ?></h2>
                 </div>
                 <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-2xl">📊</div>
             </div>
         </div>
 
-        <div class="stat-card bg-white p-6 rounded-2xl shadow border border-emerald-100">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-gray-500 text-sm">Offres Actives</p>
-                    <h2 class="text-4xl font-bold text-emerald-600 mt-2"><?= $stats['offresActives'] ?? 0 ?></h2>
-                </div>
-                <div class="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-2xl">✅</div>
-            </div>
-        </div>
+        
 
         <div class="stat-card bg-white p-6 rounded-2xl shadow border border-amber-100">
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-gray-500 text-sm">Demandes Actives</p>
-                    <h2 class="text-4xl font-bold text-amber-600 mt-2"><?= $stats['demandesActives'] ?? 0 ?></h2>
+                    <h2 class="text-4xl font-bold text-amber-600 mt-2"><?= $stats['offresActives'] ?? 0 ?></h2>
                 </div>
                 <div class="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-2xl">📬</div>
             </div>
@@ -212,19 +272,19 @@
     <td class="p-5 text-center">
         <div class="flex justify-center gap-4 text-lg">
 
-            <!-- 👁️ DETAILS -->
+            <!--  DETAILS -->
             <a href="index.php?action=detailsdemande&id=<?= $demande->getIdDemande() ?>" 
                class="text-blue-600 hover:text-blue-700">
                 <i class="fa-solid fa-eye"></i>
             </a>
 
-            <!-- 🚫 BLOCK -->
+            <!--  BLOCK -->
             <button onclick="openBlockModal(<?= $demande->getIdDemande() ?>)" 
                     class="text-amber-600 hover:text-amber-700">
                 <i class="fa-solid fa-ban"></i>
             </button>
 
-            <!-- 🗑️ DELETE -->
+            <!--  DELETE -->
             <button onclick="openDeleteModal(<?= $demande->getIdDemande() ?>)" 
                     class="text-red-600 hover:text-red-700">
                 <i class="fa-solid fa-trash"></i>
@@ -313,7 +373,97 @@ window.location.href = `index.php?action=dashboard_block_demande&id=${currentBlo
 
 // Export
 function exportData() {
-    toastr.info("Exportation en cours...");
+    console.log('exportData appelée');
+    try {
+        const tableBody = document.getElementById('tableBody');
+        console.log('tableBody trouvé:', tableBody);
+
+        if (!tableBody) {
+            toastr.error("Tableau non trouvé!");
+            return;
+        }
+
+        const visibleRows = Array.from(tableBody.querySelectorAll('tr'))
+            .filter(row => row.style.display !== 'none');
+
+        console.log('Lignes visibles:', visibleRows.length);
+
+        if (!visibleRows.length) {
+            toastr.warning("Aucune demande trouvée pour l'exportation.");
+            return;
+        }
+
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const mins = String(now.getMinutes()).padStart(2, '0');
+
+        const formattedDate = day + '/' + month + '/' + year;
+        const formattedTime = hours + ':' + mins;
+
+        const headerCells = Array.from(document.querySelectorAll('table thead th'))
+            .map(th => th.textContent.trim())
+            .filter(text => text !== 'Actions');
+
+        let rowsHtml = '';
+        visibleRows.forEach(row => {
+            rowsHtml += '<tr>';
+            Array.from(row.querySelectorAll('td')).forEach((td, index) => {
+                if (index === 5) return;
+                const content = td.textContent.trim();
+                let cellStyle = 'padding:15px 14px;border-bottom:1px solid #e2e8f0;vertical-align:middle;font-size:13px;color:#1f2937;';
+
+                if (index === 0) {
+                    cellStyle += 'text-align:left;font-weight:600;';
+                } else {
+                    cellStyle += 'text-align:center;';
+                }
+
+                let cellContent = content;
+                if (index === 4) {
+                    if (content.toLowerCase().includes('active')) {
+                        cellContent = '<span style="background:#d1fae5;color:#065f46;padding:8px 14px;border-radius:8px;font-weight:700;font-size:12px;display:inline-block;">✓ ACTIVE</span>';
+                    } else if (content.toLowerCase().includes('fermée') || content.toLowerCase().includes('fermee')) {
+                        cellContent = '<span style="background:#fed7aa;color:#92400e;padding:8px 14px;border-radius:8px;font-weight:700;font-size:12px;display:inline-block;">◉ FERMÉE</span>';
+                    } else if (content.toLowerCase().includes('expirée') || content.toLowerCase().includes('expiree')) {
+                        cellContent = '<span style="background:#fee2e2;color:#991b1b;padding:8px 14px;border-radius:8px;font-weight:700;font-size:12px;display:inline-block;">✕ EXPIRÉE</span>';
+                    } else if (content.toLowerCase().includes('bloque')) {
+                        cellContent = '<span style="background:#f3f4f6;color:#374151;padding:8px 14px;border-radius:8px;font-weight:700;font-size:12px;display:inline-block;">⊗ BLOQUÉE</span>';
+                    }
+                }
+
+                rowsHtml += '<td style="' + cellStyle + '">' + cellContent + '</td>';
+            });
+            rowsHtml += '</tr>';
+        });
+
+        let headerRow = '';
+        headerCells.forEach(text => {
+            headerRow += '<th>' + text + '</th>';
+        });
+
+        const htmlContent = '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Export Demandes</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:system-ui,-apple-system,"Segoe UI","Helvetica Neue",sans-serif;padding:40px;color:#0f172a;background:#f0f4f8;}.export-container{background:#fff;border-radius:20px;padding:48px;box-shadow:0 32px 64px rgba(15,23,42,0.12);max-width:1200px;margin:0 auto;}.logo-section{display:flex;align-items:center;gap:16px;margin-bottom:32px;padding-bottom:24px;border-bottom:2px solid #e2e8f0;}.logo-box{width:70px;height:70px;border-radius:20px;background:linear-gradient(135deg,#2563eb 0%,#1e40af 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 20px 50px rgba(37,99,235,0.25);}.logo-text h1{font-size:24px;font-weight:900;color:#0f172a;letter-spacing:-0.5px;margin:0;}.logo-text p{font-size:13px;color:#64748b;margin-top:4px;}.export-title{font-size:32px;font-weight:900;letter-spacing:-1px;color:#0f172a;margin-bottom:10px;}.export-subtitle{color:#64748b;font-size:14px;margin-bottom:20px;}.stats-box{background:linear-gradient(135deg,#eff6ff 0%,#f0f9ff 100%);border-left:5px solid #2563eb;padding:16px 18px;border-radius:10px;margin-bottom:28px;display:inline-flex;align-items:center;gap:12px;}.stats-label{font-weight:600;color:#1e40af;}.stats-value{font-weight:800;font-size:18px;color:#2563eb;}.export-table{width:100%;border-collapse:collapse;margin-top:24px;}.export-table thead{background:linear-gradient(135deg,#2563eb 0%,#1e40af 100%);}.export-table thead th{color:#fff;font-weight:800;padding:18px 14px;text-align:left;font-size:12px;letter-spacing:0.05em;}.export-table tbody tr:nth-child(odd){background:#f8fafc;}.export-table tbody tr:nth-child(even){background:#fff;}.export-footer{margin-top:32px;padding-top:24px;border-top:2px solid #e2e8f0;font-size:12px;color:#64748b;text-align:center;}@media print{body{background:#fff;padding:20px;}.export-container{box-shadow:none;padding:30px;}}@page{size:A4 landscape;margin:1.5cm;}</style></head><body><div class="export-container"><div class="logo-section"><div class="logo-box">📋</div><div class="logo-text"><h1>JobBoard Admin</h1><p>Export des demandes • ' + formattedDate + ' a ' + formattedTime + '</p></div></div><h1 class="export-title">Liste des demandes exportees</h1><div class="stats-box"><span class="stats-label">Total de lignes :</span><span class="stats-value">' + visibleRows.length + '</span></div><table class="export-table"><thead><tr>' + headerRow + '</tr></thead><tbody>' + rowsHtml + '</tbody></table><div class="export-footer">Export genere le ' + formattedDate + ' a ' + formattedTime + '</div></div><script>window.onload=function(){setTimeout(function(){window.print();},600);}<\/script></body></html>';
+
+        // Utiliser Blob pour éviter les problèmes de window.open
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const newWindow = window.open(url, '_blank');
+
+        if (!newWindow) {
+            toastr.error("Ouverture de fenetre bloquee. Verifiez vos parametres de navigateur.");
+            console.log('window.open bloque');
+            return;
+        }
+
+        console.log('Export genere avec succes');
+        toastr.success("Export genere! Vous pouvez maintenant imprimer ou enregistrer en PDF.");
+
+    } catch (e) {
+        console.error('Erreur export:', e);
+        toastr.error("Erreur: " + e.message);
+    }
 }
 
 // Toastr from PHP
@@ -329,6 +479,143 @@ document.addEventListener('DOMContentLoaded', () => {
             row.style.transform = 'translateY(0)';
         }, i * 40);
     });
+});
+
+
+
+</script>
+
+
+<script>
+// Variables globales
+let doughnutChart = null;
+let barChart = null;
+let horizontalChart = null;
+
+function openStatsModal() {
+    const modal = document.getElementById('statsModal');
+    modal.classList.remove('hidden');
+    
+    // Important : on attend que la modal soit visible + animation terminée
+    setTimeout(() => {
+        initAllCharts();
+    }, 450);
+}
+
+function closeStatsModal() {
+    const modal = document.getElementById('statsModal');
+    modal.classList.add('hidden');
+    destroyCharts();
+}
+
+function destroyCharts() {
+    if (doughnutChart) { doughnutChart.destroy(); doughnutChart = null; }
+    if (barChart) { barChart.destroy(); barChart = null; }
+    if (horizontalChart) { horizontalChart.destroy(); horizontalChart = null; }
+}
+
+function initAllCharts() {
+    // Récupération des valeurs PHP (sécurisé avec json_encode)
+    const total = <?= json_encode($stats['total'] ?? 0) ?>;
+    const actives = <?= json_encode($stats['offresActives'] ?? 0) ?>;
+    const expirees = <?= json_encode($stats['expirees'] ?? 0) ?>;
+
+    // 1. Doughnut Chart
+    const ctxDoughnut = document.getElementById('doughnutChart');
+    if (doughnutChart) doughnutChart.destroy();
+
+    doughnutChart = new Chart(ctxDoughnut, {
+        type: 'doughnut',
+        data: {
+            labels: ['Actives', 'Expirées / Bloquées', 'Autres'],
+            datasets: [{
+                data: [actives, expirees, Math.max(0, total - actives - expirees)],
+                backgroundColor: ['#10b981', '#ef4444', '#64748b'],
+                borderColor: '#ffffff',
+                borderWidth: 5,
+                hoverOffset: 30
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { padding: 25, font: { size: 15 }, usePointStyle: true }
+                }
+            }
+        }
+    });
+
+    // 2. Bar Chart Vertical
+    const ctxBar = document.getElementById('barChart');
+    if (barChart) barChart.destroy();
+
+    barChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: ['Total', 'Actives', 'Expirées/Bloquées'],
+            datasets: [{
+                label: 'Nombre de demandes',
+                data: [total, actives, expirees],
+                backgroundColor: ['#3b82f6', '#10b981', '#ef4444'],
+                borderRadius: 12,
+                barThickness: 75,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 3. Horizontal Bar
+    const ctxHorizontal = document.getElementById('horizontalChart');
+    if (horizontalChart) horizontalChart.destroy();
+
+    horizontalChart = new Chart(ctxHorizontal, {
+        type: 'bar',
+        data: {
+            labels: ['Demandes Actives', 'Expirées / Bloquées', 'Total des Demandes'],
+            datasets: [{
+                label: 'Quantité',
+                data: [actives, expirees, total],
+                backgroundColor: ['#10b981', '#ef4444', '#6366f1'],
+                borderRadius: 10,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Force le redimensionnement après création
+    setTimeout(() => {
+        if (doughnutChart) doughnutChart.resize();
+        if (barChart) barChart.resize();
+        if (horizontalChart) horizontalChart.resize();
+    }, 100);
+}
+
+// Fermer en cliquant dehors
+document.getElementById('statsModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeStatsModal();
+    }
 });
 </script>
 </body>

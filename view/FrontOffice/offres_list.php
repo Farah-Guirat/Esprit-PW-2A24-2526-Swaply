@@ -87,19 +87,23 @@
         <div class="mt-6 flex gap-3">
 
           <a href="index.php?action=show&id=<?= $a->getIdOffre() ?>"
-             class="flex-1 bg-teal-500 hover:bg-teal-600 text-white py-3 rounded-2xl text-center">
+             class="flex-1 bg-teal-500 hover:bg-teal-600 text-white py-3 rounded-2xl text-center shadow-md hover:shadow-xl transition">
             Voir détails
           </a>
-                    <?php if ($current_user_id == $a->getIdU() || $current_user_id == 1): ?>
+          <button onclick="shareOffer(<?= $a->getIdOffre() ?>, '<?= addslashes($a->getTitre()) ?>')"
+        class="flex-1 bg-yellow-200 text-yellow-900 py-3 rounded-2xl text-center">
+  Share
+</button>
+          <?php if ( $a->getIdU()== 1): ?>
 
 
           <a href="index.php?action=edit&id=<?= $a->getIdOffre() ?>"
-             class="flex-1 bg-blue-500 text-white py-3 rounded-2xl text-center">
+             class="flex-1 bg-blue-200 text-blue-900 py-3 rounded-2xl text-center shadow-md hover:shadow-lg transition">
             Modifier
           </a>
 
           <button onclick="openDeleteModal(<?= $a->getIdOffre() ?>)"
-                  class="flex-1 bg-red-500 text-white py-3 rounded-2xl text-center">
+                  class="flex-1 bg-red-200 text-red-900 py-3 rounded-2xl text-center shadow-md hover:bg-red-300 hover:shadow-xl transition">
             Supprimer
           </button>
           <?php endif; ?>
@@ -137,7 +141,7 @@
      class="hidden fixed inset-0 bg-black/60 flex items-center justify-center">
 
   <div class="bg-white p-6 rounded-2xl w-96 text-center">
-
+   
     <h2 class="text-xl font-bold text-red-600">
       Confirmer suppression ?
     </h2>
@@ -204,6 +208,31 @@ function filterOffers() {
 
 searchInput.addEventListener("input", filterOffers);
 filterSelect.addEventListener("change", filterOffers);
+
+
+
+function shareOffer(id, titre) {
+
+    const url = window.location.origin + "/swaply/public/index.php?action=show&id=" + id;
+
+    const text = "SWAPLY 🚀\n" + titre + "\n" + url;
+
+    if (navigator.share) {
+
+        navigator.share({
+            title: "Swaply Offer",
+            text: text,
+            url: url
+        }).catch(err => console.log(err));
+
+    } else {
+
+        //  fallback: copy link
+        navigator.clipboard.writeText(url)
+            .then(() => alert("Lien copié !"))
+            .catch(() => alert("Impossible de copier"));
+    }
+}
 </script>
 
 </body>

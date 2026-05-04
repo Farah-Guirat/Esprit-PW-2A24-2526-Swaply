@@ -4,6 +4,8 @@ use Entity\Offre;
 
 require_once __DIR__ . '/../Config/Database.php';
 require_once __DIR__ . '/../Models/Offre.php';
+require_once __DIR__ . '/../Services/AIService.php';
+
 
 class OffreController {
 
@@ -48,7 +50,6 @@ class OffreController {
 
             $offres[] = $offre;
         }
-                $current_user_id = $_SESSION['user_id'] ?? null;
 
 
         require __DIR__ . '/../view/FrontOffice/offres_list.php';
@@ -113,7 +114,7 @@ public function deleteOffre(int $id): void {
     $stmt = $pdo->prepare("DELETE FROM offres WHERE id_offre = ?");
     $stmt->execute([$id]);
 
-    // 🔥 redirection vers liste après suppression
+    //  redirection vers liste après suppression
     header("Location: index.php?action=list");
     exit;
 }
@@ -121,8 +122,8 @@ public function deleteOffre(int $id): void {
 //ajout offre
 
 
-public function ajoutOffre(): void {
-
+public function ajoutOffre(): void
+{
     $pdo = Database::getInstance();
 
     $stmt = $pdo->prepare("
@@ -132,41 +133,85 @@ public function ajoutOffre(): void {
     ");
 
     $stmt->execute([
-        $_POST['titre'] ?? '',
-        $_POST['description'] ?? '',
-        $_POST['categorie'] ?? '',
-        $_POST['niveau'] ?? '',
-        $_POST['date_limite'] ?? null
+        $_POST['titre'],
+        $_POST['description'],
+        $_POST['categorie'],
+        $_POST['niveau'],
+        $_POST['date_limite']
     ]);
 
-    // ✅ REDIRECT CORRECT
+    //  get last id
+    $id = $pdo->lastInsertId();
+
+    //  build text
+    $text = AIService::buildText($_POST);
+
+    //  generate embedding
+    $embedding = AIService::getEmbedding($text);
+
+    //  save embedding
+    $stmt = $pdo->prepare("UPDATE offres SET embedding=? WHERE id_offre=?");
+    $stmt->execute([
+        json_encode($embedding),
+        $id
+    ]);
+
     header("Location: index.php?action=list");
     exit;
 }
-
 
 public function matching(int $id_offre): array
 {
     $pdo = Database::getInstance();
 
-    $sql = "SELECT 
-                d.id_demande,
-                d.titre,
-                d.description,
-                d.categorie,
-                d.niveau
-            FROM offres o
-            JOIN demandes d 
-                ON o.categorie = d.categorie
-                AND o.niveau = d.niveau
-            WHERE o.id_offre = ?
-            AND LOWER(o.statut) = 'active'
-            AND LOWER(d.statut) = 'active'";
-
-    $stmt = $pdo->prepare($sql);
+    //  get offre
+    $stmt = $pdo->prepare("SELECT * FROM offres WHERE id_offre = ?");
     $stmt->execute([$id_offre]);
+    $offre = $stmt->fetch();
 
-    return $stmt->fetchAll();
+    if (!$offre || empty($offre['embedding'])) {
+        return [];
+    }
+
+    $offreEmbedding = json_decode($offre['embedding'], true);
+
+    //  get demandes actives
+    $stmt = $pdo->query("SELECT * FROM demandes WHERE statut = 'active'");
+    $demandes = $stmt->fetchAll();
+
+    $results = [];
+
+    foreach ($demandes as $d) {
+
+        if (empty($d['embedding'])) continue;
+
+        $demandeEmbedding = json_decode($d['embedding'], true);
+
+        //  cosine similarity
+        $score = AIService::cosineSimilarity($offreEmbedding, $demandeEmbedding);
+
+        //  bonus métier
+        if ($offre['categorie'] === $d['categorie']) {
+            $score += 0.10;
+        }
+
+        if ($offre['niveau'] === $d['niveau']) {
+            $score += 0.05;
+        }
+
+        // filter
+        if ($score >= 0.60) {
+            $d['score'] = round($score, 3);
+            $results[] = $d;
+        }
+    }
+
+    //  sort best matches first
+    usort($results, function ($a, $b) {
+        return $b['score'] <=> $a['score'];
+    });
+
+    return $results;
 }
 
 
@@ -175,13 +220,8 @@ public function matching(int $id_offre): array
 
 
 
-
-
-
-
-
-public function updateOffre(): void {
-
+public function updateOffre(): void
+{
     $pdo = Database::getInstance();
 
     $stmt = $pdo->prepare("
@@ -199,6 +239,18 @@ public function updateOffre(): void {
         $_POST['id_offre']
     ]);
 
+    //  rebuild text
+    $text = AIService::buildText($_POST);
+
+    //  new embedding
+    $embedding = AIService::getEmbedding($text);
+
+    $stmt = $pdo->prepare("UPDATE offres SET embedding=? WHERE id_offre=?");
+    $stmt->execute([
+        json_encode($embedding),
+        $_POST['id_offre']
+    ]);
+
     header("Location: index.php?action=list");
     exit;
 }
@@ -207,7 +259,6 @@ public function updateOffre(): void {
 
 
 
-// Nouvelle méthode recommandée
  function getOffreById(int $id): array {
     $pdo = Database::getInstance();
     
@@ -224,7 +275,7 @@ public function updateOffre(): void {
 
 // Méthode edit mise à jour
 public function editOffre(int $id): void {
-    $offre = $this->getOffreById($id);   // Utilise la nouvelle méthode
+    $offre = $this->getOffreById($id);   
     require __DIR__ . '/../view/FrontOffice/offre_edit.php';
 }
 

@@ -88,18 +88,27 @@
         <div class="mt-6 flex gap-3">
 
           <a href="index.php?action=showd&id=<?= $a->getIdDemande() ?>"
-             class="flex-1 bg-teal-500 hover:bg-teal-600 text-white py-3 rounded-2xl text-center">
+             class="flex-1 bg-teal-500 hover:bg-teal-600 text-white py-3 rounded-2xl text-center shadow-md hover:shadow-xl transition">
             Voir détails
           </a>
-          <?php if ($current_user_id == $a->getIdU() || $current_user_id == 1): ?>
+
+          <a href="#"
+   onclick="sharedemande(<?= $a->getIdDemande() ?>, '<?= addslashes($a->getTitre()) ?>')"
+   class="flex-1 bg-yellow-200 text-yellow-900 py-3 rounded-2xl text-center">
+  Share
+</a>
+
+
+          
+          <?php if ( $a->getIdU()== 2): ?>
 
           <a href="index.php?action=editd&id=<?= $a->getIdDemande() ?>"
-             class="flex-1 bg-blue-500 text-white py-3 rounded-2xl text-center">
+             class="flex-1 bg-blue-200 text-blue-900 py-3 rounded-2xl text-center shadow-md hover:shadow-lg transition">
             Modifier
           </a>
 
           <button onclick="openDeleteModal(<?= $a->getIdDemande() ?>)"
-                  class="flex-1 bg-red-500 text-white py-3 rounded-2xl text-center">
+                  class="flex-1 bg-red-200 text-red-900 py-3 rounded-2xl text-center shadow-md hover:bg-red-300 hover:shadow-xl transition">
             Supprimer
           </button>
           <?php endif; ?>
@@ -203,6 +212,29 @@ function filterOffers() {
 
 searchInput.addEventListener("input", filterOffers);
 filterSelect.addEventListener("change", filterOffers);
+
+
+function sharedemande(id, titre) {
+
+    const url = window.location.origin + "/swaply/public/index.php?action=show&id=" + id;
+
+    const text = "SWAPLY 🚀\n" + titre + "\n" + url;
+
+    if (navigator.share) {
+
+        navigator.share({
+            title: "Swaply Offer",
+            text: text,
+            url: url
+        }).catch(err => console.log(err));
+
+    } else {
+
+        navigator.clipboard.writeText(url)
+            .then(() => alert("Lien copié !"))
+            .catch(() => alert("Impossible de copier"));
+    }
+}
 </script>
 
 </body>

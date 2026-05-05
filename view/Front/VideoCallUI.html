@@ -1,0 +1,75 @@
+<!-- Modal/Container pour les appels vidéo -->
+<div id="videoCallContainer" class="video-call-container hidden">
+    <!-- Header de l'appel -->
+    <div class="video-call-header">
+        <div class="call-info">
+            <h3 id="callParticipant" class="participant-name">Appel vidéo</h3>
+            <span id="callDuration" class="call-duration">00:00</span>
+        </div>
+        <div class="call-controls">
+            <button id="toggleAudioBtn" class="control-btn audio-btn" title="Microphone">
+                <i class="icon-mic"></i>
+            </button>
+            <button id="toggleVideoBtn" class="control-btn video-btn" title="Caméra">
+                <i class="icon-video"></i>
+            </button>
+            <button id="toggleScreenBtn" class="control-btn screen-btn" title="Partager l'écran">
+                <i class="icon-screen"></i>
+            </button>
+            <button id="endCallBtn" class="control-btn end-btn" title="Terminer">
+                <i class="icon-phone-off"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Conteneur vidéo -->
+    <div class="video-call-main">
+        <!-- Vidéo locale (petite, en coin) -->
+        <div class="video-grid">
+            <div id="localVideoContainer" class="video-container local">
+                <video id="localVideo" autoplay muted playsinline></video>
+                <div class="video-label">Vous</div>
+            </div>
+
+            <!-- Grille des vidéos distantes -->
+            <div id="remoteVideoGrid" class="remote-grid"></div>
+        </div>
+    </div>
+
+    <!-- Indicateurs d'état -->
+    <div class="video-call-footer">
+        <div id="connectionStatus" class="connection-status">
+            <span class="status-indicator"></span>
+            <span class="status-text">Connecté</span>
+        </div>
+        <div id="participantList" class="participant-list"></div>
+    </div>
+</div>
+
+<!-- Widget pour les appels entrants -->
+<div id="incomingCallWidget" class="incoming-call-widget hidden">
+    <div class="incoming-call-content">
+        <div class="incoming-avatar">
+            <i class="icon-user-large"></i>
+        </div>
+        <h2 id="incomingCallerName" class="caller-name">Appel entrant</h2>
+        <p class="calling-text">Appel vidéo en cours...</p>
+        
+        <div class="incoming-call-actions">
+            <button id="acceptIncomingBtn" class="action-btn accept-btn">
+                <i class="icon-phone"></i> Accepter
+            </button>
+            <button id="rejectIncomingBtn" class="action-btn reject-btn">
+                <i class="icon-phone-off"></i> Rejeter
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Bouton pour démarrer un appel vidéo (dans la messagerie) -->
+<div id="videoCallInitiators" class="video-call-initiators">
+    <!-- Les boutons seront générés dynamiquement -->
+</div>
+
+<!-- Notifications -->
+<div id="videoCallNotifications" class="video-call-notifications"></div>

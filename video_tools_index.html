@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Outils Appel Vidéo - Swaply</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto;
+        }
+        h1 { color: white; text-align: center; margin-bottom: 10px; font-size: 32px; }
+        .tagline { color: rgba(255,255,255,0.8); text-align: center; margin-bottom: 40px; font-size: 16px; }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        @media (max-width: 600px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+        
+        .card-icon { font-size: 40px; margin-bottom: 15px; }
+        .card-title { color: #333; font-weight: 700; font-size: 18px; margin-bottom: 8px; }
+        .card-desc { color: #666; font-size: 13px; margin-bottom: 15px; flex-grow: 1; }
+        .card-link {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        .card-link::after { content: ' →'; margin-left: 5px; }
+        
+        .alert {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 4px solid #ffc107;
+        }
+        .alert h3 { color: #ff6b6b; margin-bottom: 10px; }
+        .alert p { color: #666; font-size: 14px; line-height: 1.6; }
+        
+        .footer {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-right: 5px;
+        }
+        
+        a { text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔧 Appel Vidéo Swaply</h1>
+    <p class="tagline">Centre de diagnostic et de correction</p>
+    
+    <!-- Alerte importante -->
+    <div class="alert">
+        <h3>⚠️  Erreur HTTP 409?</h3>
+        <p>Si vous recevez l'erreur "Un appel précédent est encore en cours...", <strong>cliquez sur "Quick Fix"</strong> ci-dessous. C'est le moyen le plus rapide de résoudre le problème!</p>
+    </div>
+    
+    <div class="grid">
+        <!-- Quick Fix -->
+        <a href="quickfix_409.html" class="card">
+            <div class="card-icon">⚡</div>
+            <div class="card-title">⚡ Quick Fix 409</div>
+            <div class="card-desc">Solution automatisée pour l'erreur 409. Lance la migration, le nettoyage et la vérification en 3 étapes.</div>
+            <span class="badge">RAPIDE</span>
+            <span class="card-link">Ouvrir</span>
+        </a>
+        
+        <!-- Diagnostic Avancé -->
+        <a href="diagnostic_advanced.html" class="card">
+            <div class="card-icon">📊</div>
+            <div class="card-title">📊 Diagnostic Avancé</div>
+            <div class="card-desc">Monitorez l'état du système en temps réel, nettoyez les appels bloqués, et visualisez la base de données.</div>
+            <span class="badge">COMPLET</span>
+            <span class="card-link">Ouvrir</span>
+        </a>
+        
+        <!-- Aller à Messagerie -->
+        <a href="/swaply/view/Front/Messages.php" class="card">
+            <div class="card-icon">📞</div>
+            <div class="card-title">📞 Tester Appel Vidéo</div>
+            <div class="card-desc">Allez directement à la messagerie pour tester un appel vidéo avec un autre utilisateur.</div>
+            <span class="card-link">Ouvrir</span>
+        </a>
+        
+        <!-- Documentation -->
+        <a href="SOLUTION_409.md" class="card">
+            <div class="card-icon">📖</div>
+            <div class="card-title">📖 Documentation</div>
+            <div class="card-desc">Guide complet de troubleshooting avec explications détaillées et solutions avancées.</div>
+            <span class="card-link">Lire</span>
+        </a>
+        
+        <!-- Nettoyage Direct -->
+        <a href="cleanup_aggressive.php" class="card">
+            <div class="card-icon">🧹</div>
+            <div class="card-title">🧹 Nettoyage Agressif</div>
+            <div class="card-desc">Script direct qui termine tous les appels de plus de 1 minute et retourne les statistiques JSON.</div>
+            <span class="card-link">Nettoyer</span>
+        </a>
+        
+        <!-- Test Simple -->
+        <a href="test_video_call.html" class="card">
+            <div class="card-icon">🧪</div>
+            <div class="card-title">🧪 Test Simple</div>
+            <div class="card-desc">Interface simple pour tester les connexions de base (PHP, Socket.io, validation).</div>
+            <span class="card-link">Tester</span>
+        </a>
+    </div>
+    
+    <!-- Checklist -->
+    <div style="background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #333; margin-bottom: 15px;">✓ Avant de tester</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+            <div>☐ Serveur Node.js démarré</div>
+            <div>☐ Apache/XAMPP démarré</div>
+            <div>☐ MySQL démarré</div>
+            <div>☐ Deux onglets ouverts</div>
+            <div>☐ Deux utilisateurs</div>
+            <div>☐ F12 console ouverte</div>
+        </div>
+    </div>
+    
+    <!-- Quick Links -->
+    <div style="background: white; border-radius: 12px; padding: 25px; margin-bottom: 30px;">
+        <h3 style="color: #333; margin-bottom: 15px;">🔗 Accès Directs</h3>
+        <ul style="list-style: none; font-size: 14px;">
+            <li style="margin: 8px 0;"><a href="diagnostic_video_call.php" style="color: #667eea; font-weight: 600;">📁 Voir la BD (diagnostic_video_call.php)</a></li>
+            <li style="margin: 8px 0;"><a href="migrate_video_calls.php" style="color: #667eea; font-weight: 600;">🔧 Lancer migration (migrate_video_calls.php)</a></li>
+            <li style="margin: 8px 0;"><a href="/swaply/video_server/server.js" style="color: #667eea; font-weight: 600;">🖥️  Serveur Node.js (video_server/server.js)</a></li>
+            <li style="margin: 8px 0;"><a href="RESUME_FINAL.txt" style="color: #667eea; font-weight: 600;">📋 Résumé de validation</a></li>
+        </ul>
+    </div>
+    
+    <div class="footer">
+        <strong>💡 CONSEIL:</strong> Commencez par "Quick Fix 409" si vous avez l'erreur, sinon utilisez "Diagnostic Avancé" pour monitorer.<br>
+        <strong>🆘 Problème persistant?</strong> Consultez la Documentation puis le Diagnostic Avancé.<br>
+        Dernière mise à jour: 5 mai 2026
+    </div>
+</div>
+
+</body>
+</html>

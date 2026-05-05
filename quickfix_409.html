@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Fix - Appel Vidéo 409</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container { 
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+            position: relative;
+        }
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 15%;
+            right: 15%;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: -1;
+        }
+        .step-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #999;
+            transition: all 0.3s;
+        }
+        .step-dot.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        .step-dot.done {
+            background: #28a745;
+            color: white;
+        }
+        
+        .step-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        .step-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        .message.loading { background: #e7f3ff; color: #004085; }
+        .message.success { background: #d4edda; color: #155724; }
+        .message.error { background: #f8d7da; color: #721c24; }
+        .message.info { background: #d1ecf1; color: #0c5460; }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .btn:hover { background: #764ba2; transform: translateY(-2px); }
+        .btn:disabled { background: #999; cursor: not-allowed; }
+        .btn-next { margin-top: 20px; }
+        
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress {
+            height: 100%;
+            background: #667eea;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .detail-box {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+            text-align: left;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        
+        .icon-big { font-size: 48px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔧 Quick Fix 409</h1>
+    <p class="subtitle">Résoudre l'erreur d'appel vidéo</p>
+    
+    <!-- Indicateur de progression -->
+    <div class="step-indicator">
+        <div class="step-dot active" id="dot-1">1</div>
+        <div class="step-dot" id="dot-2">2</div>
+        <div class="step-dot" id="dot-3">3</div>
+        <div class="step-dot" id="dot-4">4</div>
+    </div>
+    
+    <div class="progress-bar">
+        <div class="progress" id="progress" style="width: 25%;"></div>
+    </div>
+    
+    <!-- STEP 1: Migration -->
+    <div class="step-content active" id="step-1">
+        <div class="icon-big">🔧</div>
+        <h2>Étape 1: Préparation BD</h2>
+        <p>Vérifier et ajouter les colonnes manquantes</p>
+        <button class="btn btn-next" onclick="runMigration()">▶ Lancer</button>
+        <div id="step1-result"></div>
+    </div>
+    
+    <!-- STEP 2: Cleanup -->
+    <div class="step-content" id="step-2">
+        <div class="icon-big">🧹</div>
+        <h2>Étape 2: Nettoyage</h2>
+        <p>Supprimer les appels bloqués</p>
+        <button class="btn btn-next" onclick="runCleanup()">▶ Nettoyer</button>
+        <div id="step2-result"></div>
+    </div>
+    
+    <!-- STEP 3: Vérification -->
+    <div class="step-content" id="step-3">
+        <div class="icon-big">✓</div>
+        <h2>Étape 3: Vérification</h2>
+        <p>Vérifier l'état du système</p>
+        <button class="btn btn-next" onclick="runDiagnostic()">▶ Vérifier</button>
+        <div id="step3-result"></div>
+    </div>
+    
+    <!-- STEP 4: Succès -->
+    <div class="step-content" id="step-4">
+        <div class="icon-big">🎉</div>
+        <h2>Succès!</h2>
+        <p>Le système est prêt</p>
+        <div class="message success">✓ Tous les problèmes sont résolus</div>
+        <button class="btn btn-next" onclick="goToMessages()">📞 Aller à Messagerie</button>
+        <button class="btn" onclick="goToDiagnostic()" style="background: #6c757d;">📊 Diagnostic Avancé</button>
+    </div>
+</div>
+
+<script>
+let currentStep = 1;
+
+function showStep(step) {
+    for (let i = 1; i <= 4; i++) {
+        document.getElementById(`step-${i}`).classList.remove('active');
+        document.getElementById(`dot-${i}`).classList.remove('active');
+        if (i <= currentStep - 1) {
+            document.getElementById(`dot-${i}`).classList.add('done');
+        }
+    }
+    document.getElementById(`step-${step}`).classList.add('active');
+    document.getElementById(`dot-${step}`).classList.add('active');
+    document.getElementById('progress').style.width = `${step * 25}%`;
+    currentStep = step;
+}
+
+async function makeRequest(url) {
+    try {
+        const response = await fetch(url);
+        return await response.json();
+    } catch (e) {
+        return { error: e.message };
+    }
+}
+
+async function runMigration() {
+    const result = document.getElementById('step1-result');
+    result.innerHTML = '<div class="message loading">⏳ Migration en cours...</div>';
+    
+    const data = await makeRequest('migrate_video_calls.php');
+    
+    if (data.success) {
+        let html = '<div class="message success">✓ Migration réussie<br>';
+        data.migrations.forEach(m => html += m + '<br>');
+        html += '</div>';
+        result.innerHTML = html;
+        
+        setTimeout(() => showStep(2), 1500);
+    } else {
+        result.innerHTML = `<div class="message error">❌ Erreur: ${data.error}</div>`;
+    }
+}
+
+async function runCleanup() {
+    const result = document.getElementById('step2-result');
+    result.innerHTML = '<div class="message loading">⏳ Nettoyage en cours...</div>';
+    
+    const data = await makeRequest('cleanup_aggressive.php');
+    
+    if (data.success) {
+        let html = `<div class="message success">✓ Nettoyage réussi<br>`;
+        html += `Appels nettoyés: ${data.cleaned.count}<br>`;
+        html += `Appels actifs restants: ${data.active_remaining}<br>`;
+        html += `</div>`;
+        result.innerHTML = html;
+        
+        setTimeout(() => showStep(3), 1500);
+    } else {
+        result.innerHTML = `<div class="message error">❌ Erreur: ${data.error}</div>`;
+    }
+}
+
+async function runDiagnostic() {
+    const result = document.getElementById('step3-result');
+    result.innerHTML = '<div class="message loading">⏳ Diagnostic en cours...</div>';
+    
+    const data = await makeRequest('diagnostic_video_call.php');
+    
+    if (data.error) {
+        result.innerHTML = `<div class="message error">❌ Erreur: ${data.error}</div>`;
+        return;
+    }
+    
+    const en_attente = data.stats?.en_attente || 0;
+    const en_cours = data.stats?.en_cours || 0;
+    const active = en_attente + en_cours;
+    
+    if (active === 0) {
+        result.innerHTML = `
+            <div class="message success">✓ Diagnostic OK</div>
+            <div class="detail-box">
+                Appels terminés: ${data.stats?.termine || 0}<br>
+                Appels actifs: 0<br>
+                État: ✓ Prêt
+            </div>
+        `;
+        
+        setTimeout(() => showStep(4), 1500);
+    } else {
+        result.innerHTML = `
+            <div class="message error">⚠️  Appels actifs détectés</div>
+            <div class="detail-box">
+                En attente: ${en_attente}<br>
+                En cours: ${en_cours}<br>
+                <button class="btn" onclick="runCleanup()" style="margin-top: 10px; width: 100%;">🔄 Réessayer le nettoyage</button>
+            </div>
+        `;
+    }
+}
+
+function goToMessages() {
+    window.location.href = '/swaply/view/Front/Messages.php';
+}
+
+function goToDiagnostic() {
+    window.location.href = '/swaply/diagnostic_advanced.html';
+}
+
+// Au chargement, vérifier le système
+window.addEventListener('load', () => {
+    // On peut lancer automatiquement si souhaité
+    // runMigration();
+});
+</script>
+
+</body>
+</html>

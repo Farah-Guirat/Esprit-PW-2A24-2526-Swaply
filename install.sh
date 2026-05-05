@@ -43,10 +43,18 @@ echo -e "${GREEN}✓${NC} Permissions tmp: 755"
 echo ""
 echo -e "${YELLOW}[3/3]${NC} Exécution de la migration base de données..."
 
+echo -e "${YELLOW}[3.1/3]${NC} Migration des fichiers..."
 if php config/migrate_files.php 2>/dev/null; then
-    echo -e "${GREEN}✓${NC} Migration base de données complétée"
+    echo -e "${GREEN}✓${NC} Migration des fichiers complétée"
 else
-    echo -e "${YELLOW}⚠${NC} Migration base de données (vérifier manuellement)"
+    echo -e "${YELLOW}⚠${NC} Migration des fichiers (vérifier manuellement)"
+fi
+
+echo -e "${YELLOW}[3.2/3]${NC} Migration des réactions..."
+if php config/migrate_reactions.php 2>/dev/null; then
+    echo -e "${GREEN}✓${NC} Migration des réactions complétée"
+else
+    echo -e "${YELLOW}⚠${NC} Migration des réactions (vérifier manuellement)"
 fi
 
 echo ""

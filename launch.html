@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Lancer Quick Fix</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container { 
+            text-align: center;
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { font-size: 48px; margin-bottom: 10px; }
+        p { color: #666; margin-bottom: 20px; font-size: 16px; }
+        
+        .big-btn {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px 0;
+        }
+        .big-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .secondary-btn {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .secondary-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>⚡</h1>
+    <h2 style="margin-bottom: 10px; color: #333;">Quick Fix 409</h2>
+    <p>Résoudre l'erreur d'appel vidéo en 1-2 minutes</p>
+    
+    <button class="big-btn" onclick="launchQuickFix()">
+        ▶ LANCER LA CORRECTION
+    </button>
+    
+    <button class="big-btn secondary-btn" onclick="goToTools()">
+        📋 Voir tous les outils
+    </button>
+    
+    <button class="big-btn secondary-btn" onclick="goToMessages()">
+        📞 Aller à Messagerie
+    </button>
+    
+    <div class="status" id="status">
+        Prêt. Cliquez sur "LANCER LA CORRECTION"
+    </div>
+</div>
+
+<script>
+function launchQuickFix() {
+    const status = document.getElementById('status');
+    status.innerHTML = '<span class="spinner"></span>Redirection en cours...';
+    setTimeout(() => {
+        window.location.href = 'quickfix_409.html';
+    }, 300);
+}
+
+function goToTools() {
+    window.location.href = 'video_tools_index.html';
+}
+
+function goToMessages() {
+    window.location.href = '/swaply/view/Front/Messages.php';
+}
+
+// Auto-launch après 1s si déjà sur cette page
+window.addEventListener('load', () => {
+    // Optionnel: lancer automatiquement après N secondes
+    // setTimeout(launchQuickFix, 3000);
+});
+</script>
+
+</body>
+</html>

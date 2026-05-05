@@ -30,11 +30,20 @@ REM 2. Migration base de données
 echo.
 echo [2/3] Exécution de la migration base de données...
 
+echo [2.1/3] Migration des fichiers...
 php config\migrate_files.php
 if !errorlevel! equ 0 (
-    echo ✓ Migration base de données complétée
+    echo ✓ Migration des fichiers complétée
 ) else (
-    echo ⚠ Migration base de données (vérifier manuellement)
+    echo ⚠ Migration des fichiers (vérifier manuellement)
+)
+
+echo [2.2/3] Migration des réactions...
+php config\migrate_reactions.php
+if !errorlevel! equ 0 (
+    echo ✓ Migration des réactions complétée
+) else (
+    echo ⚠ Migration des réactions (vérifier manuellement)
 )
 
 echo.

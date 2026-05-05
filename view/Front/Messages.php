@@ -150,8 +150,27 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
         .msg-status.read { color:#1D9E75; }
 
         /* Bouton ⋮ sur mes messages */
-        .msg-options-btn { display:none; background:none; border:none; cursor:pointer; color:#9ca3af; font-size:18px; padding:2px 6px; line-height:1; align-self:flex-end; margin-bottom:4px; }
-        .msg-row:hover .msg-options-btn { display:block; }
+        .msg-options-btn { 
+            display: none; 
+            background: none; 
+            border: none; 
+            cursor: pointer; 
+            color: #9ca3af; 
+            font-size: 18px; 
+            padding: 2px 6px; 
+            line-height: 1; 
+            align-self: flex-end; 
+            margin-bottom: 4px;
+            transition: all 0.2s;
+        }
+
+        .msg-row.reactions-active .msg-options-btn {
+            display: block;
+        }
+
+        .msg-options-btn:hover {
+            color: #6b7280;
+        }
 
         /* Menu contextuel */
         .ctx-menu { display:none; position:fixed; background:#fff; border:1px solid #e5e7eb; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,.12); z-index:1000; min-width:155px; overflow:hidden; }
@@ -200,13 +219,146 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
         .char-count.warn { color:#f59e0b; }
         .char-count.over { color:#dc2626; }
 
+        /* Bouton d'enregistrement vocal */
+        .btn-voice-record { width:38px; height:38px; border-radius:50%; background:#f0f0f0; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#666; font-size:18px; transition:all 0.2s; position:relative; }
+        .btn-voice-record:hover { background:#e0e0e0; }
+        .btn-voice-record.recording { background:#dc2626; color:white; animation:pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow:0 0 0 0 rgba(220, 38, 38, 0.7); } 50% { box-shadow:0 0 0 10px rgba(220, 38, 38, 0); } }
+        
+        /* Aperçu du message vocal */
+        .voice-preview { padding:10px 12px; background:#f0f7ff; border-radius:8px; margin-top:8px; display:flex; align-items:center; gap:8px; }
+        .voice-preview .voice-duration { font-size:12px; color:#0066cc; font-weight:500; }
+        .voice-preview .btn-remove-voice { background:none; border:none; color:#dc2626; cursor:pointer; font-size:14px; padding:0 4px; }
+        .voice-waveform { display:flex; align-items:flex-end; gap:2px; height:30px; }
+        .voice-waveform .bar { width:2px; background:#0066cc; border-radius:1px; }
+        
+        /* Affichage des messages vocaux */
+        .msg-voice-player { background:#f0f7ff; border-left:3px solid #0066cc; padding:10px 12px; border-radius:6px; margin-top:6px; }
+        .msg-voice-controls { display:flex; align-items:center; gap:8px; }
+        .voice-play-btn { width:32px; height:32px; border-radius:50%; background:#1D9E75; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:white; font-size:14px; transition:all 0.2s; }
+        .voice-play-btn:hover { background:#178a64; transform:scale(1.05); }
+        .voice-duration-display { font-size:12px; color:#666; min-width:40px; }
+        .voice-timestamp { font-size:10px; color:#999; margin-top:3px; }
+        .audio-player { flex:1; }
+
+        /* Messages d'événements appel vidéo (style Instagram) */
+        .msg-video-call { 
+            background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
+            border: 1px solid rgba(29, 158, 117, 0.2);
+            color: #333;
+            text-align: center;
+            font-size: 12px;
+            padding: 8px 12px;
+            font-weight: 500;
+            border-radius: 20px;
+            max-width: 280px;
+            margin: 4px auto;
+        }
+        .msg-row.mine .msg-bubble.msg-video-call {
+            background: rgba(29, 158, 117, 0.1);
+            color: #1D9E75;
+        }
+        .msg-row.other .msg-bubble.msg-video-call {
+            background: rgba(29, 158, 117, 0.1);
+            color: #0F6E56;
+        }
+
         /* Avatars colorés */
         .av-blue   { background:#E6F1FB; color:#185FA5; }
         .av-coral  { background:#FAECE7; color:#993C1D; }
         .av-purple { background:#EEEDFE; color:#534AB7; }
         .av-amber  { background:#FAEEDA; color:#854F0B; }
         .av-teal   { background:#E1F5EE; color:#0F6E56; }
+
+        /* Réactions aux messages */
+        .reaction-btn {
+            background: none;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            color: #6b7280;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .msg-row.reactions-active .reaction-btn {
+            display: inline-block;
+        }
+
+        .reaction-btn:hover {
+            background-color: #f3f4f6;
+            border-color: #1D9E75;
+            color: #1D9E75;
+        }
+
+        .reactions-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .reaction-badge {
+            display: inline-block;
+            background-color: #f3f4f6;
+            border-radius: 12px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: 1px solid #e5e7eb;
+        }
+
+        .reaction-badge:hover {
+            background-color: #e5e7eb;
+            transform: scale(1.05);
+        }
+
+        .reaction-badge.user-reacted {
+            background-color: #ecf5f1;
+            color: #1D9E75;
+            border-color: #1D9E75;
+        }
+
+        .reaction-badge.user-reacted:hover {
+            background-color: #d1e8e0;
+        }
+
+        .emoji-picker {
+            position: fixed;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            max-width: 260px;
+            justify-content: center;
+        }
+
+        .emoji-picker button {
+            background: #f3f4f6;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.2s;
+        }
+
+        .emoji-picker button:hover {
+            background: #e5e7eb;
+        }
     </style>
+    <!-- ── CSS pour les appels vidéo ── -->
+    <link rel="stylesheet" href="../../asset/css/videocall.css">
 </head>
 <body>
 
@@ -333,11 +485,20 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
                         <span class="typing-dot"></span>
                     </div>
                 </div>
-                <a href="#" class="btn-del-conv-header"
-                   onclick="openModalConv(event, <?= $id_active_conv ?>, '<?= htmlspecialchars($ip.' '.$in, ENT_QUOTES) ?>')">
-                   🗑 Supprimer la conversation
-                </a>
+                <!-- Boutons de contrôle du chat (Appel vidéo + Supprimer) -->
+                <div style="display:flex; gap:10px; margin-left:auto;">
+                    <button onclick="startVideoCall()" 
+                            class="video-call-btn" 
+                            style="padding: 8px 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.3s;">
+                        📞 Appel vidéo
+                    </button>
+                    <a href="#" class="btn-del-conv-header"
+                       onclick="openModalConv(event, <?= $id_active_conv ?>, '<?= htmlspecialchars($ip.' '.$in, ENT_QUOTES) ?>')">
+                       🗑 Supprimer la conversation
+                    </a>
+                </div>
             </div>
+            
 
             <!-- Messages de la conversation -->
             <div class="chat-messages" id="chatMessages">
@@ -347,7 +508,7 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
                     foreach ($messages as $msg):
                         $isMine = ($msg['id_expediteur'] == $id_user);
                     ?>
-                        <div class="msg-row <?= $isMine ? 'mine' : 'other' ?>">
+                        <div class="msg-row <?= $isMine ? 'mine' : 'other' ?>" data-message-id="<?= $msg['id_message']; ?>">>
                             <?php if (!$isMine): ?>
                                 <div class="msg-avatar-sm <?= $av_other ?>">
                                     <?= strtoupper(substr($msg['prenom'], 0, 1) . substr($msg['nom'], 0, 1)) ?>
@@ -355,8 +516,45 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
                             <?php endif; ?>
 
                             <div class="msg-wrap">
-                                <div class="msg-bubble"><?= nl2br(htmlspecialchars($msg['contenu'])) ?></div>
-                                <?php if (!empty($msg['fichier_path'])): ?>
+                                <?php 
+                                $isVideoCall = strpos(($msg['type_message'] ?? 'texte'), 'video_call') === 0;
+                                if ($isVideoCall): 
+                                ?>
+                                    <div class="msg-bubble msg-video-call">
+                                        <?= nl2br(htmlspecialchars($msg['contenu'])) ?>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="msg-bubble"><?= nl2br(htmlspecialchars($msg['contenu'])) ?></div>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($msg['fichier_path']) && ($msg['type_message'] ?? 'texte') === 'fichier'): ?>
+                                    <div class="msg-file-attachment">
+                                        <a href="<?= htmlspecialchars('../..' . '/' . $msg['fichier_path']) ?>" download="<?= htmlspecialchars($msg['fichier_nom_original']) ?>">
+                                            <span class="msg-file-icon">📄</span>
+                                            <span><?= htmlspecialchars($msg['fichier_nom_original']) ?></span>
+                                        </a>
+                                        <div class="msg-file-size"><?= formatFileSize($msg['fichier_taille']) ?></div>
+                                    </div>
+                                <?php elseif (!empty($msg['fichier_path']) && ($msg['type_message'] ?? 'texte') === 'voix'): ?>
+                                    <div class="msg-voice-player">
+                                        <div class="msg-voice-controls">
+                                            <button class="voice-play-btn" onclick="toggleAudioPlay(event)" title="Écouter">▶</button>
+                                            <audio class="audio-player" controls style="flex:1;">
+                                                <source src="<?= htmlspecialchars('../..' . '/' . $msg['fichier_path']) ?>" type="<?= htmlspecialchars($msg['fichier_type']) ?>">
+                                                Votre navigateur ne supporte pas la lecture audio.
+                                            </audio>
+                                            <span class="voice-duration-display" id="duration-<?= $msg['id_message'] ?>">
+                                                <?php
+                                                $duree = isset($msg['voix_duree']) ? $msg['voix_duree'] : 0;
+                                                $mins = floor($duree / 60);
+                                                $secs = $duree % 60;
+                                                echo sprintf('%d:%02d', $mins, $secs);
+                                                ?>
+                                            </span>
+                                        </div>
+                                        <div class="voice-timestamp"><?= formatFileSize($msg['fichier_taille']) ?></div>
+                                    </div>
+                                <?php elseif (!empty($msg['fichier_path'])): ?>
                                     <div class="msg-file-attachment">
                                         <a href="<?= htmlspecialchars('../..' . '/' . $msg['fichier_path']) ?>" download="<?= htmlspecialchars($msg['fichier_nom_original']) ?>">
                                             <span class="msg-file-icon">📄</span>
@@ -373,6 +571,8 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
                                         </span>
                                     <?php endif; ?>
                                 </div>
+                                <button class="reaction-btn" data-id-message="<?= $msg['id_message']; ?>" title="Ajouter une réaction">😊 Réagir</button>
+                                <div class="reactions-container"></div>
                             </div>
 
                             <!-- Bouton ⋮ uniquement sur MES messages -->
@@ -407,11 +607,19 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
                         <button type="button" class="btn-remove-file" onclick="removeFileAttachment()">✕</button>
                     </div>
                     
+                    <!-- Aperçu du message vocal -->
+                    <div id="voicePreview" class="voice-preview" style="display:none;">
+                        <div class="voice-waveform" id="voiceWaveform"></div>
+                        <span class="voice-duration" id="voiceDuration">0:00</span>
+                        <button type="button" class="btn-remove-voice" onclick="removeVoiceRecording()" title="Annuler l'enregistrement">✕</button>
+                    </div>
+                    
                     <div class="chat-form-row">
                         <div class="file-input-wrapper">
                             <button type="button" class="btn-file-attach" id="btnFileAttach" title="Joindre un fichier" onclick="document.getElementById('fileInput').click()">📎</button>
                             <input type="file" id="fileInput" name="fichier" onchange="handleFileSelect(this)">
                         </div>
+                        <button type="button" class="btn-voice-record" id="btnVoiceRecord" title="Enregistrer un message vocal" onclick="toggleVoiceRecording(event)">🎤</button>
                         <textarea name="contenu" id="msgTextarea" rows="1"
                             placeholder="Écrire un message... (Entrée pour envoyer)"
                             oninput="autoResize(this); updateCharCount(this)"></textarea>
@@ -436,6 +644,9 @@ $av_classes   = ['av-blue', 'av-coral', 'av-purple', 'av-amber', 'av-teal'];
         <?php endif; ?>
     </div>
 </div>
+
+<!-- ── CONTAINER POUR LES APPELS VIDÉO ── -->
+<?php include_once '../../view/Front/VideoCallUI.html'; ?>
 
 <!-- ── MENU CONTEXTUEL (⋮ sur mes messages) ── -->
 <div id="ctxMenu" class="ctx-menu">
@@ -745,5 +956,411 @@ if (userMenuBtn && userDropdown) {
 }
 
 </script>
-</body>
-</html>
+
+<!-- ── Scripts pour les appels vidéo ── -->
+<script>
+    // Détecter dynamiquement l'adresse du serveur socket.io
+    // Utiliser la même adresse/port que le client (localhost:3000, 192.168.x.x:3000, etc.)
+    const socketProtocol = window.location.protocol; // http: ou https:
+    const socketHost = window.location.hostname; // localhost, 192.168.x.x, etc.
+    const socketUrl = socketProtocol + '//' + socketHost + ':3000';
+    console.log('[Setup] Socket.io URL:', socketUrl);
+    
+    // Charger le script socket.io dynamiquement depuis l'adresse détectée
+    const socketIoScript = document.createElement('script');
+    socketIoScript.src = socketUrl + '/socket.io/socket.io.js';
+    socketIoScript.onload = () => {
+        console.log('[Setup] ✓ Socket.io script chargé depuis', socketUrl);
+    };
+    socketIoScript.onerror = () => {
+        console.error('[Setup] ✗ Impossible de charger socket.io depuis', socketUrl);
+    };
+    document.head.appendChild(socketIoScript);
+</script>
+<script src="../../asset/js/ErrorHandler.js"></script>
+<script src="../../asset/js/VideoCallManager.js"></script>
+<script src="../../asset/js/VideoCallUI.js"></script>
+
+<script>
+    // ID utilisateur pour le système vidéo
+    window.currentUserId = <?php echo (int)($_SESSION['id_user'] ?? 0); ?>;
+    window.currentConversationId = <?php echo isset($id_active_conv) ? (int)$id_active_conv : 0; ?>;
+    window.currentInterlocuteurId = <?php echo isset($interlocuteur_id) ? (int)$interlocuteur_id : 0; ?>;
+    window.currentInterlocuteurPrenom = '<?php echo isset($ip) ? htmlspecialchars($ip, ENT_QUOTES) : ''; ?>'; // FIX: $ip est le PRÉNOM
+    window.currentInterlocuteurNom = '<?php echo isset($in) ? htmlspecialchars($in, ENT_QUOTES) : ''; ?>'; // FIX: $in est le NOM
+    window.socketUrl = socketUrl; // Passer l'URL dynamique à VideoCallUI
+</script>
+
+<!-- ── Gestion des réactions aux messages ── -->
+<script src="../../asset/js/reactions.js"></script>
+<script>
+    // ── Afficher le bouton de réaction au clic sur le message ──
+    document.addEventListener('click', function(e) {
+        // Ne pas réagir si c'est un clic sur un élément interactif
+        if (e.target.closest('.reaction-btn') || 
+            e.target.closest('.msg-options-btn') ||
+            e.target.closest('.reactions-container') ||
+            e.target.closest('.emoji-picker') ||
+            e.target.closest('.ctx-menu')) {
+            return;
+        }
+
+        const msgRow = e.target.closest('.msg-row');
+        if (msgRow) {
+            e.stopPropagation();
+            // Retirer la classe active de tous les messages
+            document.querySelectorAll('.msg-row.reactions-active').forEach(row => {
+                if (row !== msgRow) {
+                    row.classList.remove('reactions-active');
+                }
+            });
+            // Ajouter la classe active au message cliqué
+            msgRow.classList.toggle('reactions-active');
+        } else {
+            // Clic en dehors du message - masquer tous les boutons
+            document.querySelectorAll('.msg-row.reactions-active').forEach(row => {
+                row.classList.remove('reactions-active');
+            });
+        }
+    });
+
+    <?php if ($id_active_conv > 0): ?>
+    // Attendre que le gestionnaire soit chargé et initialiser
+    if (typeof currentUserId !== 'undefined') {
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initialisation du gestionnaire de réactions pour l\'utilisateur:', currentUserId);
+            
+            // Attendre que le ReactionManager soit chargé
+            const checkReactionManager = setInterval(() => {
+                if (typeof ReactionManager !== 'undefined') {
+                    clearInterval(checkReactionManager);
+                    window.reactionManager = new ReactionManager(currentUserId);
+                    
+                    // Charger les réactions de tous les messages
+                    const messageElements = document.querySelectorAll('[data-id-message]');
+                    console.log('Chargement des réactions pour ' + messageElements.length + ' messages');
+                    
+                    messageElements.forEach(msgElement => {
+                        const msgId = msgElement.getAttribute('data-id-message');
+                        if (msgId) {
+                            window.reactionManager.loadReactions(msgId);
+                        }
+                    });
+                }
+            }, 100);
+        });
+    }
+    <?php endif; ?>
+</script>
+
+<!-- ── Gestion des messages vocaux ── -->
+<script>
+// ── Variables globales pour l'enregistrement audio ────────────────────────────
+let mediaRecorder = null;
+let audioChunks = [];
+let recordingStartTime = null;
+let recordingInterval = null;
+
+// ── Basculer l'enregistrement vocal ──────────────────────────────────────────
+async function toggleVoiceRecording(event) {
+    event.preventDefault();
+    const btn = document.getElementById('btnVoiceRecord');
+    
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        // Arrêter l'enregistrement
+        stopVoiceRecording();
+    } else {
+        // Démarrer l'enregistrement
+        btn.textContent = '⏳';
+        btn.disabled = true;
+        startVoiceRecording();
+    }
+}
+
+// ── Démarrer l'enregistrement ────────────────────────────────────────────────
+async function startVoiceRecording() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        const microphone = audioContext.createMediaStreamSource(stream);
+        
+        microphone.connect(analyser);
+        analyser.fftSize = 256;
+        
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        recordingStartTime = Date.now();
+        
+        const btn = document.getElementById('btnVoiceRecord');
+        btn.classList.add('recording');
+        btn.title = 'Cliquez pour arrêter l\'enregistrement';
+        
+        // Mettre à jour le waveform
+        const waveformDiv = document.getElementById('voiceWaveform');
+        waveformDiv.innerHTML = '';
+        
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        recordingInterval = setInterval(() => {
+            analyser.getByteFrequencyData(dataArray);
+            waveformDiv.innerHTML = '';
+            
+            for (let i = 0; i < Math.min(20, bufferLength); i += 3) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                const height = (dataArray[i] / 255) * 100;
+                bar.style.height = Math.max(5, height) + '%';
+                waveformDiv.appendChild(bar);
+            }
+        }, 100);
+        
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) {
+                audioChunks.push(e.data);
+            }
+        };
+        
+        mediaRecorder.onstop = () => {
+            stream.getTracks().forEach(track => track.stop());
+            audioContext.close();
+        };
+        
+        mediaRecorder.start();
+        const btn2 = document.getElementById('btnVoiceRecord');
+        btn2.textContent = '🎤';
+        btn2.disabled = false;
+        showVoicePreview();
+        
+    } catch (error) {
+        console.error('Erreur accès microphone:', error);
+        const btn3 = document.getElementById('btnVoiceRecord');
+        btn3.textContent = '🎤';
+        btn3.disabled = false;
+        alert('Impossible d\'accéder au microphone. Vérifiez les permissions.');
+    }
+}
+
+// ── Arrêter l'enregistrement ─────────────────────────────────────────────────
+function stopVoiceRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        
+        const btn = document.getElementById('btnVoiceRecord');
+        btn.classList.remove('recording');
+        btn.title = 'Enregistrer un message vocal';
+        
+        if (recordingInterval) {
+            clearInterval(recordingInterval);
+        }
+        
+        mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            window.recordedAudioBlob = audioBlob;
+            window.recordedAudioDuration = Math.floor((Date.now() - recordingStartTime) / 1000);
+            updateVoicePreview();
+        };
+    }
+}
+
+// ── Afficher l'aperçu du message vocal ─────────────────────────────────────
+function showVoicePreview() {
+    const preview = document.getElementById('voicePreview');
+    const textarea = document.getElementById('msgTextarea');
+    const filePreview = document.getElementById('filePreview');
+    
+    // Masquer le fichier si présent
+    if (filePreview.style.display !== 'none') {
+        removeFileAttachment();
+    }
+    
+    // Masquer la textarea pendant l'enregistrement
+    textarea.style.display = 'none';
+    preview.style.display = 'flex';
+}
+
+// ── Mettre à jour l'aperçu du message vocal ────────────────────────────────
+function updateVoicePreview() {
+    const duration = window.recordedAudioDuration || 0;
+    const mins = Math.floor(duration / 60);
+    const secs = duration % 60;
+    const durationText = `${mins}:${secs.toString().padStart(2, '0')}`;
+    
+    const durationEl = document.getElementById('voiceDuration');
+    durationEl.textContent = durationText;
+}
+
+// ── Supprimer l'enregistrement vocal ───────────────────────────────────────
+function removeVoiceRecording() {
+    window.recordedAudioBlob = null;
+    window.recordedAudioDuration = 0;
+    audioChunks = [];
+    recordingStartTime = null;
+    
+    const preview = document.getElementById('voicePreview');
+    const textarea = document.getElementById('msgTextarea');
+    const waveform = document.getElementById('voiceWaveform');
+    
+    preview.style.display = 'none';
+    textarea.style.display = 'block';
+    waveform.innerHTML = '';
+    
+    const btn = document.getElementById('btnVoiceRecord');
+    btn.classList.remove('recording');
+}
+
+// ── Valider et envoyer le message ───────────────────────────────────────────
+function validateAndSend() {
+    const textarea = document.getElementById('msgTextarea');
+    const textarea_val = textarea.value.trim();
+    const hasFile = document.getElementById('fileInput').files.length > 0;
+    const hasVoice = window.recordedAudioBlob !== null && window.recordedAudioBlob !== undefined;
+    const errors = [];
+    
+    // Validation
+    if (!textarea_val && !hasFile && !hasVoice) {
+        errors.push('Le message ne peut pas être vide.');
+    }
+    
+    if (textarea_val && textarea_val.length > 2000) {
+        errors.push('Le message ne peut pas dépasser 2000 caractères.');
+    }
+    
+    if (errors.length > 0) {
+        const errorDiv = document.getElementById('frontError');
+        errorDiv.innerHTML = errors.map(e => '<span>⚠ ' + e + '</span>').join('<br>');
+        return;
+    }
+    
+    // Envoyer le message
+    if (hasVoice) {
+        sendVoiceMessage();
+    } else {
+        // Envoi classique (texte + fichier optionnel)
+        document.getElementById('msgForm').submit();
+    }
+}
+
+// ── Envoyer le message vocal via AJAX ──────────────────────────────────────
+function sendVoiceMessage() {
+    if (!window.recordedAudioBlob) {
+        alert('Aucun enregistrement vocal disponible');
+        return;
+    }
+    
+    const formData = new FormData();
+    const idConv = document.querySelector('input[name="id_conversation"]').value;
+    
+    formData.append('id_conversation', idConv);
+    formData.append('voix', window.recordedAudioBlob, 'voice_message.webm');
+    formData.append('duree', window.recordedAudioDuration || 0);
+    
+    // Afficher un indicateur de chargement
+    const btn = document.querySelector('.btn-send');
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Envoi...';
+    
+    // Déterminer le chemin correct vers le contrôleur
+    const basePath = window.location.pathname.split('/view/')[0];
+    const controllerUrl = basePath + '/controller/MessageController.php?action=sendVoice';
+    
+    fetch(controllerUrl, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Réponse du serveur:', data);
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        
+        if (data.success) {
+            console.log('Message vocal envoyé avec succès:', data.voix_path);
+            removeVoiceRecording();
+            // Actualiser la page après un court délai
+            setTimeout(() => {
+                location.reload();
+            }, 500);
+        } else {
+            console.error('Erreur serveur:', data.message);
+            alert('❌ Erreur: ' + data.message);
+        }
+    })
+    .catch(err => {
+        console.error('Erreur AJAX:', err);
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        alert('❌ Erreur lors de l\'envoi du message vocal: ' + err.message);
+    });
+}
+
+// ── Basculer la lecture audio ──────────────────────────────────────────────
+function toggleAudioPlay(event) {
+    event.preventDefault();
+    const btn = event.target.closest('.voice-play-btn');
+    const audio = btn.nextElementSibling;
+    
+    if (audio && audio.classList.contains('audio-player')) {
+        if (audio.paused) {
+            audio.play();
+            btn.textContent = '⏸';
+        } else {
+            audio.pause();
+            btn.textContent = '▶';
+        }
+    }
+}
+function startVideoCall() {
+    if (typeof VideoCallUI !== 'undefined') {
+        if (!window.videoCallUI) {
+            window.videoCallUI = new VideoCallUI(window.currentUserId || 0);
+        }
+
+        // Utiliser les variables JavaScript globales définies à la ligne 935-938
+        window.videoCallUI.initiateCall(
+            window.currentConversationId || 0,
+            window.currentInterlocuteurId || 0,
+            window.currentInterlocuteurNom || '',
+            window.currentInterlocuteurPrenom || ''
+        );
+    } else {
+        alert("VideoCallUI non chargé !");
+    }
+}
+// ── Event listeners pour les contrôles audio ───────────────────────────────
+document.addEventListener('play', (e) => {
+    if (e.target.classList.contains('audio-player')) {
+        const btn = e.target.previousElementSibling;
+        if (btn && btn.classList.contains('voice-play-btn')) {
+            btn.textContent = '⏸';
+        }
+    }
+}, true);
+
+document.addEventListener('pause', (e) => {
+    if (e.target.classList.contains('audio-player')) {
+        const btn = e.target.previousElementSibling;
+        if (btn && btn.classList.contains('voice-play-btn')) {
+            btn.textContent = '▶';
+        }
+    }
+}, true);
+
+// ── Intercepter Entrée pour envoyer ────────────────────────────────────────
+const textarea = document.getElementById('msgTextarea');
+if (textarea) {
+    textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            validateAndSend();
+        }
+    });
+}
+</script>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test d'Envoi Message Vocal</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .test { border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .error { background-color: #ffdddd; color: #cc0000; }
+        .success { background-color: #ddffdd; color: #00cc00; }
+        button { padding: 10px 20px; font-size: 14px; cursor: pointer; }
+        .log { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 3px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>🎤 Test d'Envoi Message Vocal</h1>
+    
+    <div class="test">
+        <h3>1. Test du Microphone</h3>
+        <button onclick="testMicrophone()">📍 Tester le Microphone</button>
+        <div id="micLog" class="log"></div>
+    </div>
+    
+    <div class="test">
+        <h3>2. Test d'Enregistrement</h3>
+        <button onclick="startRecording()">🔴 Enregistrer (3 secondes)</button>
+        <button onclick="stopRecording()">🛑 Arrêter</button>
+        <div id="recordLog" class="log"></div>
+    </div>
+    
+    <div class="test">
+        <h3>3. Test d'Upload</h3>
+        <p>Assurez-vous d'avoir enregistré un message (étape 2) avant de tester l'upload.</p>
+        <button onclick="testUpload()">📤 Tester l'Upload</button>
+        <div id="uploadLog" class="log"></div>
+    </div>
+    
+    <script>
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordedBlob = null;
+    
+    function log(element, message, isError = false) {
+        const el = document.getElementById(element);
+        const timestamp = new Date().toLocaleTimeString();
+        el.innerHTML += `[${timestamp}] ${message}\n`;
+        el.scrollTop = el.scrollHeight;
+        
+        if (isError) {
+            el.className = 'log error';
+        } else {
+            el.className = 'log success';
+        }
+    }
+    
+    // Test 1: Microphone
+    async function testMicrophone() {
+        const element = 'micLog';
+        document.getElementById(element).innerHTML = '';
+        
+        log(element, 'Vérification du navigateur...');
+        
+        if (!navigator.mediaDevices) {
+            log(element, '❌ MediaDevices API non supportée', true);
+            return;
+        }
+        
+        if (!navigator.mediaDevices.getUserMedia) {
+            log(element, '❌ getUserMedia non supportée', true);
+            return;
+        }
+        
+        log(element, '✅ MediaDevices API supportée');
+        
+        if (!window.MediaRecorder) {
+            log(element, '❌ MediaRecorder non supportée', true);
+            return;
+        }
+        
+        log(element, '✅ MediaRecorder supportée');
+        
+        try {
+            log(element, 'Demande d\'accès au microphone...');
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            log(element, '✅ Accès au microphone accordé');
+            
+            // Récupérer les informations du microphone
+            const tracks = stream.getTracks();
+            log(element, `✅ ${tracks.length} flux audio trouvé(s)`);
+            
+            if (tracks[0]) {
+                const settings = tracks[0].getSettings();
+                log(element, `✅ Paramètres: ${JSON.stringify(settings).substring(0, 100)}...`);
+            }
+            
+            // Fermer le flux
+            tracks.forEach(track => track.stop());
+            log(element, '✅ Microphone fermé');
+            
+        } catch (err) {
+            log(element, `❌ Erreur: ${err.message}`, true);
+            log(element, `Détails: ${err.name}`, true);
+        }
+    }
+    
+    // Test 2: Enregistrement
+    async function startRecording() {
+        const element = 'recordLog';
+        document.getElementById(element).innerHTML = '';
+        
+        try {
+            log(element, 'Demande d\'accès au microphone...');
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            log(element, '✅ Microphone accessible');
+            
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = (e) => {
+                audioChunks.push(e.data);
+                log(element, `✅ Chunk reçu: ${e.data.size} bytes`);
+            };
+            
+            mediaRecorder.onstart = () => {
+                log(element, '🔴 Enregistrement démarré');
+            };
+            
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                recordedBlob = blob;
+                log(element, `✅ Enregistrement arrêté: ${blob.size} bytes total`);
+                log(element, `✅ Type MIME: ${blob.type}`);
+            };
+            
+            mediaRecorder.start();
+            
+            // Arrêter après 3 secondes
+            setTimeout(() => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
+            }, 3000);
+            
+            log(element, '⏳ Arrêt automatique dans 3 secondes...');
+            
+        } catch (err) {
+            log(element, `❌ Erreur: ${err.message}`, true);
+        }
+    }
+    
+    function stopRecording() {
+        const element = 'recordLog';
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            log(element, '🛑 Arrêt manuel');
+        }
+    }
+    
+    // Test 3: Upload
+    function testUpload() {
+        const element = 'uploadLog';
+        document.getElementById(element).innerHTML = '';
+        
+        if (!recordedBlob) {
+            log(element, '❌ Aucun enregistrement disponible', true);
+            return;
+        }
+        
+        log(element, `Blob disponible: ${recordedBlob.size} bytes`);
+        log(element, `Type MIME: ${recordedBlob.type}`);
+        
+        // Créer FormData
+        const formData = new FormData();
+        formData.append('id_conversation', 1); // ID conversation de test
+        formData.append('voix', recordedBlob, 'voice_test.webm');
+        formData.append('duree', 3);
+        
+        log(element, 'Envoi de la requête AJAX...');
+        
+        // Déterminer l'URL correcte
+        const basePath = window.location.pathname.split('/test_voice')[0];
+        const controllerUrl = basePath + '/controller/MessageController.php?action=sendVoice';
+        
+        log(element, `URL: ${controllerUrl}`);
+        
+        fetch(controllerUrl, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            log(element, `Réponse HTTP: ${response.status} ${response.statusText}`);
+            return response.text();
+        })
+        .then(text => {
+            log(element, `Réponse brute: ${text.substring(0, 200)}`);
+            
+            try {
+                const data = JSON.parse(text);
+                if (data.success) {
+                    log(element, '✅ Message vocal envoyé avec succès!');
+                    log(element, `Chemin: ${data.voix_path}`);
+                } else {
+                    log(element, `❌ Erreur: ${data.message}`, true);
+                }
+            } catch (e) {
+                log(element, `❌ JSON Parse Error: ${e.message}`, true);
+            }
+        })
+        .catch(err => {
+            log(element, `❌ Erreur AJAX: ${err.message}`, true);
+        });
+    }
+    
+    // Tester automatiquement au chargement
+    document.addEventListener('DOMContentLoaded', () => {
+        const micLog = document.getElementById('micLog');
+        if (navigator.mediaDevices) {
+            log('micLog', '✅ NavigatorAPIsinusé: OK', false);
+        } else {
+            log('micLog', '❌ NavigatorAPIs introuvable', true);
+        }
+    });
+    </script>
+</body>
+</html>

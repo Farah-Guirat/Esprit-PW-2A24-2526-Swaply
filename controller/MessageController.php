@@ -409,6 +409,199 @@ class MessageController {
         }
         header('Location: ../view/Back/messages.php?deleted=1'); exit;
     }
+
+    // ─── FRONT : envoyer un message vocal ────────────────────────────────────
+    /**
+     * Envoyer un message vocal via AJAX
+     * Réception : FormData avec:
+     *   - id_conversation: int
+     *   - voix: Blob audio
+     *   - duree: float (secondes)
+     * Réponse JSON:
+     *   - success: bool
+     *   - message?: string
+     *   - id_message?: int
+     */
+    public function sendVoiceMessage(): void {
+        header('Content-Type: application/json');
+        $this->startSession();
+        $id_user = $this->getUserId();
+        
+        // Log pour débogage
+        error_log("=== sendVoiceMessage START ===");
+        error_log("User ID: $id_user");
+        error_log("POST data: " . print_r($_POST, true));
+        error_log("FILES data: " . print_r($_FILES, true));
+        
+        if ($id_user <= 0) {
+            error_log("ERROR: User not authenticated");
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Non authentifié']);
+            exit;
+        }
+
+        $id_conversation = isset($_POST['id_conversation']) ? (int)$_POST['id_conversation'] : 0;
+        error_log("Conversation ID: $id_conversation");
+        
+        if ($id_conversation <= 0) {
+            error_log("ERROR: Invalid conversation ID");
+            echo json_encode(['success' => false, 'message' => 'Conversation invalide']);
+            exit;
+        }
+
+        // Vérifier que l'utilisateur a accès à cette conversation
+        $conv = $this->conversationModel->getById($id_conversation);
+        if (!$conv) {
+            error_log("ERROR: Conversation not found");
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Conversation non trouvée']);
+            exit;
+        }
+        
+        if ($conv['id_user1'] != $id_user && $conv['id_user2'] != $id_user) {
+            error_log("ERROR: User not allowed to access this conversation");
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Accès refusé']);
+            exit;
+        }
+
+        // Vérifier la présence du fichier audio
+        if (empty($_FILES['voix'])) {
+            error_log("ERROR: No voix file in FILES");
+            echo json_encode(['success' => false, 'message' => 'Fichier audio manquant']);
+            exit;
+        }
+        
+        $error_code = $_FILES['voix']['error'] ?? UPLOAD_ERR_NO_FILE;
+        if ($error_code !== UPLOAD_ERR_OK) {
+            error_log("ERROR: File upload error code: $error_code");
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'upload audio (code: ' . $error_code . ')']);
+            exit;
+        }
+
+        // Traiter l'upload du fichier audio
+        error_log("Calling handleVoiceUpload...");
+        $upload = $this->handleVoiceUpload($_FILES['voix']);
+        
+        if (isset($upload['error'])) {
+            error_log("ERROR: handleVoiceUpload failed: " . $upload['error']);
+            echo json_encode(['success' => false, 'message' => $upload['error']]);
+            exit;
+        }
+
+        error_log("File uploaded successfully: " . $upload['path']);
+
+        // Récupérer la durée si envoyée
+        $duree = isset($_POST['duree']) ? (int)$_POST['duree'] : 0;
+        error_log("Duration: $duree seconds");
+
+        // Créer le message vocal en BDD
+        error_log("Creating voice message in database...");
+        $success = $this->messageModel->createVoiceMessage(
+            voix_path: $upload['path'],
+            id_expediteur: $id_user,
+            id_conversation: $id_conversation,
+            voix_nom_original: $upload['name'],
+            voix_type: $upload['type'],
+            voix_taille: $upload['size'],
+            voix_duree: $duree
+        );
+
+        if ($success) {
+            error_log("=== Voice message created successfully ===");
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Message vocal envoyé',
+                'voix_path' => $upload['path']
+            ]);
+        } else {
+            error_log("ERROR: Failed to create message in database");
+            echo json_encode(['success' => false, 'message' => 'Erreur lors de l\'enregistrement en base de données']);
+        }
+        exit;
+    }
+
+    // ─── Gestion de l'upload de fichier audio ────────────────────────────────
+    /**
+     * Traiter l'upload d'un fichier audio (voix)
+     * Formats supportés: .webm, .mp3, .wav, .ogg
+     * Limite: 5 MB
+     */
+    private function handleVoiceUpload(array $file): array {
+        // Limite de taille : 5 MB pour les messages vocaux
+        $maxSize = 5 * 1024 * 1024;
+        
+        // Extensions autorisées pour audio
+        $allowedExts = ['webm', 'mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac'];
+        
+        // Types MIME autorisés (incluant variantes de navigateurs)
+        $allowedMimes = [
+            'audio/webm',
+            'audio/mpeg',
+            'audio/mp3',
+            'audio/wav',
+            'audio/x-wav',
+            'audio/ogg',
+            'audio/mp4',
+            'audio/x-m4a',
+            'audio/x-aac',
+            'audio/aac',
+            'audio/flac',
+            'audio/x-flac',
+            'audio/opus',
+            'audio/x-opus',
+            'application/octet-stream'  // Fallback pour navigateurs non-standard
+        ];
+
+        // Vérification de la taille
+        if ($file['size'] > $maxSize) {
+            return ['error' => 'Le fichier audio est trop volumineux (max 5 MB).'];
+        }
+
+        // Vérification de l'extension EN PREMIER (plus fiable pour les blobs)
+        $filename = basename($file['name']);
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        if (!in_array($ext, $allowedExts)) {
+            return ['error' => 'Extension de fichier audio non autorisée. Formats acceptés: ' . implode(', ', $allowedExts)];
+        }
+
+        // Vérification du type MIME (moins stricte)
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        // Accepter si le MIME type est dans la liste OR si c'est un audio/... OR application/octet-stream
+        $isValidMime = in_array($mimeType, $allowedMimes) || 
+                       strpos($mimeType, 'audio/') === 0 ||
+                       $mimeType === 'application/octet-stream';
+
+        if (!$isValidMime) {
+            // Si MIME ne correspond pas, mais extension est OK, continuer (fallback)
+            error_log("Warning: MIME type '$mimeType' n'est pas standard pour extension '$ext', mais extension acceptée.");
+        }
+
+        // Créer le dossier d'upload s'il n'existe pas
+        $uploadDir = __DIR__ . '/../uploads/voice/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // Générer un nom unique pour le fichier
+        $uniqueName = 'voice_' . uniqid() . '_' . time() . '.' . $ext;
+        $uploadPath = $uploadDir . $uniqueName;
+
+        // Déplacer le fichier uploadé
+        if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
+            return [
+                'path' => 'uploads/voice/' . $uniqueName,
+                'name' => $filename,
+                'type' => $mimeType,
+                'size' => $file['size']
+            ];
+        } else {
+            return ['error' => 'Erreur lors de l\'upload du fichier audio.'];
+        }
+    }
 }
 
 // ─── ROUTER ───────────────────────────────────────────────────────────────────
@@ -418,6 +611,7 @@ if (basename($_SERVER['SCRIPT_FILENAME']) === basename(__FILE__)) {
     $action = $_GET['action'] ?? '';
     switch ($action) {
         case 'send':               $ctrl->sendMessage();        break;
+        case 'sendVoice':          $ctrl->sendVoiceMessage();   break;
         case 'createConversation': $ctrl->createConversation(); break;
         case 'editMessage':        $ctrl->editMessage();        break;
         case 'deleteMessage':      $ctrl->deleteMessage();      break;

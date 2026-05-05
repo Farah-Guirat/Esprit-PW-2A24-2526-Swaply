@@ -1,0 +1,518 @@
+/* ─── Video Call Container ───────────────────────────────────────────────── */
+
+.video-call-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #1a1a1a;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.video-call-container.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.video-call-container.minimized {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 400px;
+    height: 300px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Header ───────────────────────────────────────────────────────────────── */
+
+.video-call-header {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.call-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.participant-name {
+    margin: 0;
+    font-size: 18px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.call-duration {
+    font-size: 14px;
+    color: #888;
+    font-family: monospace;
+}
+
+.call-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+/* ─── Control Buttons ────────────────────────────────────────────────────────── */
+
+.control-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.control-btn.disabled {
+    background: rgba(255, 255, 255, 0.05);
+    color: #666;
+    cursor: not-allowed;
+}
+
+.control-btn.end-btn {
+    background: rgba(255, 59, 48, 0.8);
+}
+
+.control-btn.end-btn:hover {
+    background: rgba(255, 59, 48, 1);
+}
+
+.control-btn.muted {
+    background: rgba(255, 193, 7, 0.8);
+}
+
+/* ─── Main Video Area ────────────────────────────────────────────────────────── */
+
+.video-call-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.video-grid {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 8px;
+    padding: 12px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+}
+
+/* ─── Local Video ────────────────────────────────────────────────────────────── */
+
+.video-container {
+    position: relative;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 16 / 9;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.video-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-container.local {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 280px;
+    height: 210px;
+    z-index: 10;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.video-label {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.video-container.no-video {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+}
+
+.video-container.no-video::after {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ─── Remote Video Grid ──────────────────────────────────────────────────────── */
+
+.remote-grid {
+    display: contents;
+}
+
+/* ─── Footer/Status ──────────────────────────────────────────────────────────── */
+
+.video-call-footer {
+    background: rgba(0, 0, 0, 0.8);
+    padding: 12px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #888;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    background: #4caf50;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.disconnected {
+    background: #f44336;
+    animation: none;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.participant-list {
+    display: flex;
+    gap: 8px;
+    color: #888;
+    font-size: 12px;
+}
+
+/* ─── Incoming Call Widget ──────────────────────────────────────────────────── */
+
+.incoming-call-widget {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    z-index: 2000;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    max-width: 400px;
+    width: 90%;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.incoming-call-widget.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.incoming-call-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.incoming-avatar {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: #fff;
+    animation: ring 2s infinite;
+}
+
+@keyframes ring {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+    }
+}
+
+.caller-name {
+    margin: 0;
+    font-size: 24px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.calling-text {
+    margin: 0;
+    color: #888;
+    font-size: 14px;
+}
+
+.incoming-call-actions {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.action-btn.accept-btn {
+    background: #4caf50;
+    color: #fff;
+}
+
+.action-btn.accept-btn:hover {
+    background: #45a049;
+    transform: scale(1.05);
+}
+
+.action-btn.reject-btn {
+    background: #f44336;
+    color: #fff;
+}
+
+.action-btn.reject-btn:hover {
+    background: #da190b;
+    transform: scale(1.05);
+}
+
+/* ─── Video Call Initiator Button ────────────────────────────────────────────── */
+
+.video-call-initiators {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.video-call-btn {
+    flex: 1;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.video-call-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.video-call-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ─── Notifications ──────────────────────────────────────────────────────────── */
+
+.video-call-notifications {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 400px;
+}
+
+.video-notification {
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    backdrop-filter: blur(10px);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.video-notification.error {
+    border-left-color: #f44336;
+}
+
+.video-notification.warning {
+    border-left-color: #ff9800;
+}
+
+.video-notification.success {
+    border-left-color: #4caf50;
+}
+
+/* ─── Responsive Design ──────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .video-grid {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        padding: 4px;
+    }
+
+    .video-container.local {
+        width: 100px;
+        height: 75px;
+        bottom: 10px;
+        right: 10px;
+    }
+
+    .video-call-header {
+        padding: 12px 16px;
+    }
+
+    .participant-name {
+        font-size: 16px;
+    }
+
+    .control-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .incoming-call-widget {
+        padding: 24px;
+    }
+
+    .caller-name {
+        font-size: 20px;
+    }
+
+    .video-call-notifications {
+        left: 10px;
+        right: 10px;
+        max-width: none;
+    }
+}
+
+/* ─── Screen Share Mode ──────────────────────────────────────────────────────── */
+
+.video-call-container.screen-share .video-grid {
+    grid-template-columns: 1fr;
+}
+
+.video-call-container.screen-share .video-container:not(.local) {
+    grid-column: 1;
+    aspect-ratio: auto;
+}
+
+/* ─── Loading State ──────────────────────────────────────────────────────────── */
+
+.video-container.loading video {
+    opacity: 0.3;
+}
+
+.video-container.loading::before {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 10;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Appel Vidéo - Swaply</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: monospace; background: #1e1e1e; color: #d4d4d4; padding: 20px; }
+        h1 { color: #4ec9b0; margin-bottom: 20px; }
+        h2 { color: #569cd6; margin-top: 20px; margin-bottom: 10px; }
+        .status { padding: 15px; margin: 10px 0; border-radius: 5px; background: #2d2d30; border-left: 3px solid #4ec9b0; }
+        .status.error { border-left-color: #f48771; }
+        .status.warning { border-left-color: #dcdcaa; }
+        .status.success { border-left-color: #6a9955; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #3e3e42; }
+        th { background: #2d2d30; color: #4ec9b0; font-weight: bold; }
+        tr:hover { background: #2d2d30; }
+        code { background: #3c3c3c; padding: 2px 6px; border-radius: 3px; }
+        .console { background: #1e1e1e; border: 1px solid #3e3e42; padding: 10px; margin: 10px 0; max-height: 300px; overflow-y: auto; }
+        .console-line { font-size: 12px; margin: 2px 0; }
+        .info { color: #9cdcfe; }
+        .warn { color: #ce9178; }
+        .error { color: #f48771; }
+        button { padding: 8px 16px; background: #569cd6; color: white; border: none; border-radius: 3px; cursor: pointer; margin-right: 10px; }
+        button:hover { background: #4ec9b0; }
+    </style>
+</head>
+<body>
+
+<h1>🔧 Debug Appel Vidéo Swaply</h1>
+
+<div>
+    <button onclick="checkServer()">Vérifier Serveur Socket.io</button>
+    <button onclick="checkUser()">Vérifier Utilisateur</button>
+    <button onclick="clearConsole()">Effacer Console</button>
+</div>
+
+<div id="status"></div>
+
+<h2>📱 Votre Session</h2>
+<table>
+    <tr>
+        <th>Propriété</th>
+        <th>Valeur</th>
+    </tr>
+    <tr>
+        <td>ID Utilisateur</td>
+        <td id="userId">-</td>
+    </tr>
+    <tr>
+        <td>VideoCallUI Chargé</td>
+        <td id="uiLoaded">-</td>
+    </tr>
+    <tr>
+        <td>Socket.io Chargé</td>
+        <td id="ioLoaded">-</td>
+    </tr>
+    <tr>
+        <td>Socket Connecté</td>
+        <td id="socketConnected">-</td>
+    </tr>
+    <tr>
+        <td>Serveur Socket.io</td>
+        <td id="socketUrl">-</td>
+    </tr>
+</table>
+
+<h2>📡 État du Serveur</h2>
+<table id="serverStatus">
+    <tr>
+        <th>Statut</th>
+        <th>Valeur</th>
+    </tr>
+</table>
+
+<h2>📋 Console de Debug</h2>
+<div class="console" id="console"></div>
+
+<script>
+const originalLog = console.log;
+const originalError = console.error;
+const originalWarn = console.warn;
+
+function log(type, ...args) {
+    const line = document.createElement('div');
+    line.className = `console-line ${type}`;
+    line.textContent = `[${new Date().toLocaleTimeString()}] ${args.join(' ')}`;
+    document.getElementById('console').appendChild(line);
+    document.getElementById('console').scrollTop = document.getElementById('console').scrollHeight;
+}
+
+console.log = (...args) => { log('info', ...args); originalLog(...args); };
+console.error = (...args) => { log('error', ...args); originalError(...args); };
+console.warn = (...args) => { log('warn', ...args); originalWarn(...args); };
+
+function updateStatus() {
+    document.getElementById('userId').textContent = window.currentUserId || '❌ Non défini';
+    document.getElementById('uiLoaded').textContent = window.videoCallUI ? '✓ Oui' : '❌ Non';
+    document.getElementById('ioLoaded').textContent = typeof io !== 'undefined' ? '✓ Oui' : '❌ Non';
+    document.getElementById('socketUrl').textContent = window.videoCallUI?.socketUrl || '❌ Non défini';
+    
+    if (window.videoCallUI?.videoManager?.socket) {
+        const socket = window.videoCallUI.videoManager.socket;
+        document.getElementById('socketConnected').textContent = socket.connected ? '✓ Connecté' : '❌ Déconnecté';
+        document.getElementById('socketConnected').style.color = socket.connected ? '#6a9955' : '#f48771';
+    } else {
+        document.getElementById('socketConnected').textContent = '⚠️ Socket non disponible';
+    }
+}
+
+async function checkServer() {
+    const status = document.getElementById('status');
+    status.innerHTML = '<div class="status info">Vérification du serveur...</div>';
+    
+    try {
+        const response = await fetch('http://localhost:3000/health');
+        if (response.ok) {
+            const data = await response.json();
+            status.innerHTML = `
+                <div class="status success">
+                    ✓ Serveur Socket.io accessible<br>
+                    Status: ${data.status}<br>
+                    Utilisateurs connectés: ${Object.keys(data.users).length}<br>
+                    Appels actifs: ${data.calls}
+                </div>
+            `;
+            console.log('Réponse du serveur:', data);
+        } else {
+            status.innerHTML = `<div class="status error">❌ Serveur indisponible (HTTP ${response.status})</div>`;
+        }
+    } catch (e) {
+        status.innerHTML = `<div class="status error">❌ Erreur: ${e.message}<br>Assurez-vous que le serveur Node.js tourne sur http://localhost:3000</div>`;
+        console.error('Erreur:', e);
+    }
+}
+
+function checkUser() {
+    const status = document.getElementById('status');
+    let html = '<div class="status">';
+    
+    if (!window.currentUserId) {
+        html += '❌ Aucun utilisateur connecté (window.currentUserId non défini)';
+    } else {
+        html += `✓ Utilisateur: ${window.currentUserId}`;
+        
+        if (window.videoCallUI?.videoManager?.socket?.connected) {
+            html += `<br>✓ Socket.io connecté`;
+            html += `<br>ℹ️ Enregistrement effectué auprès du serveur`;
+        } else {
+            html += `<br>⚠️ Socket.io non connecté`;
+            html += `<br>📌 Vérifiez que le serveur Node.js est démarré`;
+        }
+    }
+    
+    html += '</div>';
+    status.innerHTML = html;
+}
+
+function clearConsole() {
+    document.getElementById('console').innerHTML = '';
+}
+
+// Mise à jour toutes les 2 secondes
+setInterval(() => {
+    updateStatus();
+    
+    // Mettre à jour le serveur
+    fetch('http://localhost:3000/health')
+        .then(r => r.json())
+        .then(data => {
+            const table = document.getElementById('serverStatus');
+            table.innerHTML = `
+                <tr><th>Statut</th><th>Valeur</th></tr>
+                <tr><td>Serveur</td><td style="color: #6a9955;">✓ ${data.status}</td></tr>
+                <tr><td>Utilisateurs connectés</td><td>${Object.keys(data.users).length}</td></tr>
+                <tr><td>Appels actifs</td><td>${data.calls}</td></tr>
+            `;
+        })
+        .catch(() => {
+            document.getElementById('serverStatus').innerHTML = `
+                <tr><th>Statut</th><th>Valeur</th></tr>
+                <tr><td>Serveur</td><td style="color: #f48771;">❌ Indisponible</td></tr>
+            `;
+        });
+}, 2000);
+
+// Appel initial
+updateStatus();
+console.log('Page de debug démarrée');
+</script>
+
+</body>
+</html>

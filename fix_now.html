@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 FIX DATABASE NOW</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto;
+            background: #0d0d0d;
+            border: 2px solid #ff0000;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(255,0,0,0.5);
+        }
+        h1 { color: #ff0000; margin-bottom: 10px; }
+        .status { margin: 20px 0; padding: 15px; background: #111; border-left: 3px solid; }
+        .status.loading { border-color: #ffaa00; }
+        .status.success { border-color: #00ff00; }
+        .status.error { border-color: #ff0000; }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover { background: #cc0000; }
+        button:disabled { background: #666; cursor: not-allowed; }
+        
+        .log { 
+            background: #000; 
+            border: 1px solid #333; 
+            padding: 15px; 
+            margin: 15px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .log-line { margin: 3px 0; }
+        .log-success { color: #00ff00; }
+        .log-error { color: #ff0000; }
+        .log-info { color: #00aaff; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🚨 FIX DATABASE URGENCY</h1>
+    <p>Colonne manquante détectée - Réparation immédiate</p>
+    
+    <div class="status loading" id="status">
+        ⏳ Prêt. Cliquez le bouton pour lancer la réparation
+    </div>
+    
+    <button onclick="fixDatabase()" id="btnFix">🔧 LANCER RÉPARATION MAINTENANT</button>
+    <button onclick="testConnection()" id="btnTest" style="background: #0066cc;">✓ Test Connexion</button>
+    
+    <div class="log" id="log"></div>
+    
+    <button onclick="goToMessages()" id="btnGo" style="background: #00aa00; display: none;">✅ ALLER À MESSAGERIE</button>
+</div>
+
+<script>
+function log(message, type = 'info') {
+    const logEl = document.getElementById('log');
+    const line = document.createElement('div');
+    line.className = `log-line log-${type}`;
+    line.textContent = message;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+}
+
+async function fixDatabase() {
+    const btn = document.getElementById('btnFix');
+    const status = document.getElementById('status');
+    
+    btn.disabled = true;
+    status.className = 'status loading';
+    status.textContent = '⏳ Réparation en cours...';
+    
+    document.getElementById('log').innerHTML = '';
+    log('📍 Démarrage de la réparation...', 'info');
+    log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'info');
+    
+    try {
+        const response = await fetch('fix_database_now.php');
+        const text = await response.text();
+        
+        // Parser la réponse ligne par ligne
+        const lines = text.split('\n');
+        lines.forEach(line => {
+            line = line.trim();
+            if (!line) return;
+            
+            if (line.includes('✅')) {
+                log(line, 'success');
+            } else if (line.includes('❌')) {
+                log(line, 'error');
+            } else if (line.includes('🧹') || line.includes('📍') || line.includes('📊')) {
+                log(line, 'info');
+            } else if (line.includes('━')) {
+                log(line, 'info');
+            } else if (line) {
+                log(line, 'info');
+            }
+        });
+        
+        status.className = 'status success';
+        status.textContent = '✅ Réparation RÉUSSIE! La base de données est RÉPARÉE!';
+        document.getElementById('btnGo').style.display = 'block';
+        
+    } catch (e) {
+        log('ERREUR: ' + e.message, 'error');
+        status.className = 'status error';
+        status.textContent = '❌ Erreur: ' + e.message;
+    }
+    
+    btn.disabled = false;
+}
+
+async function testConnection() {
+    const status = document.getElementById('status');
+    status.className = 'status loading';
+    status.textContent = '⏳ Test connexion...';
+    
+    document.getElementById('log').innerHTML = '';
+    
+    try {
+        const response = await fetch('diagnostic_video_call.php');
+        const data = await response.json();
+        
+        if (data.error) {
+            log('❌ ' + data.error, 'error');
+            status.className = 'status error';
+        } else {
+            log('✅ Connexion OK', 'success');
+            log('Appels en attente: ' + (data.stats?.en_attente || 0), 'info');
+            log('Appels en cours: ' + (data.stats?.en_cours || 0), 'info');
+            log('Appels terminés: ' + (data.stats?.termine || 0), 'info');
+            status.className = 'status success';
+            status.textContent = '✅ Connexion établie';
+        }
+    } catch (e) {
+        log('❌ Erreur: ' + e.message, 'error');
+        status.className = 'status error';
+    }
+}
+
+function goToMessages() {
+    window.location.href = '/swaply/view/Front/Messages.php';
+}
+
+// Auto-fix au chargement
+window.addEventListener('load', () => {
+    log('ℹ️  Cliquez "LANCER RÉPARATION MAINTENANT"', 'info');
+});
+</script>
+
+</body>
+</html>

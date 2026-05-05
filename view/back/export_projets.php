@@ -16,7 +16,7 @@ $pdf->setPrintFooter(false);
 
 $pdf->AddPage();
 
-// 🔥 LOGO
+//  LOGO
 $logo = '../../assets/logo.png'; // mets ton image ici
 if(file_exists($logo)){
     $pdf->Image($logo, 80, 10, 50);

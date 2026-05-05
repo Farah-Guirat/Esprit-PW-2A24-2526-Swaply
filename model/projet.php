@@ -63,5 +63,35 @@ public function getStatistiquesDate() {
         $stmt->execute([$id_projet]);
         return $stmt->fetchAll();
     }
+
+    public function setFavorite($id) {
+    $pdo = config::getConnexion();
+    $stmt = $pdo->prepare("UPDATE projets SET is_favorite = 1 WHERE id_projet = ?");
+    return $stmt->execute([$id]);
+}
+
+public function hide($id) {
+    $pdo = config::getConnexion();
+    $stmt = $pdo->prepare("UPDATE projets SET is_hidden = 1 WHERE id_projet = ?");
+    return $stmt->execute([$id]);
+}
+
+public function unhide($id) {
+    $pdo = config::getConnexion();
+    $stmt = $pdo->prepare("UPDATE projets SET is_hidden = 0 WHERE id_projet = ?");
+    return $stmt->execute([$id]);
+}
+
+public function unarchive($id) {
+    $pdo = config::getConnexion();
+    $stmt = $pdo->prepare("UPDATE projets SET is_archived = 0 WHERE id_projet = ?");
+    return $stmt->execute([$id]);
+}
+
+public function archive($id) {
+    $pdo = config::getConnexion();
+    $stmt = $pdo->prepare("UPDATE projets SET is_archived = 1 WHERE id_projet = ?");
+    return $stmt->execute([$id]);
+}
 }
 ?>

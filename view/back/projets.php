@@ -107,55 +107,164 @@ if (isset($_GET['sort'])) {
     <!-- PAGE CONTENT -->
     <div class="page-content" id="main-content">
  
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-    <h1>Administration des projets</h1>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+        <h1>Administration des projets</h1>
 
-    <a href="export_projets.php" target="_blank" 
-     style="padding:10px 15px;background:#009688;color:white;border-radius:8px;text-decoration:none;">
-     📄 Export PDF
-    </a>
+        <a href="export_projets.php" target="_blank" 
+           style="padding:10px 15px;background:#009688;color:white;border-radius:8px;text-decoration:none;">
+           📄 Export PDF
+        </a>
 
-    <div style="margin-bottom:15px;">
-  <form method="GET">
-    <select name="sort" onchange="this.form.submit()"
-      style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;">
-      
-      <option value="">-- Trier par --</option>
-      <option value="alpha" <?= (isset($_GET['sort']) && $_GET['sort']=='alpha') ? 'selected' : '' ?>>
-        🔤 Nom (A → Z)
-      </option>
+        <div style="margin-bottom:15px;">
+          <form method="GET">
+            <select name="sort" onchange="this.form.submit()"
+              style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;">
+              <option value="">-- Trier par --</option>
+              <option value="alpha" <?= (isset($_GET['sort']) && $_GET['sort']=='alpha') ? 'selected' : '' ?>>
+                🔤 Nom (A → Z)
+              </option>
+              <option value="recent" <?= (isset($_GET['sort']) && $_GET['sort']=='recent') ? 'selected' : '' ?>>
+                🆕 Plus récents
+              </option>
+            </select>
+          </form>
+        </div>
+      </div>
 
-      <option value="recent" <?= (isset($_GET['sort']) && $_GET['sort']=='recent') ? 'selected' : '' ?>>
-        🆕 Plus récents
-      </option>
+      <!-- STATS SECTION -->
+      <div class="stats-container" style="margin-bottom: 2rem;">
 
-    </select>
-  </form>
-</div>
+        <style>
+          .stats-wrap { padding: 1.5rem 0; }
+          .stats-section-title { font-size: 13px; font-weight: 500; color: #888; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1.5rem; }
+          .metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+          .metric-card { background: #f5f5f5; border-radius: 8px; padding: 1rem 1.25rem; }
+          .metric-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+          .metric-value { font-size: 28px; font-weight: 500; color: #111; line-height: 1; }
+          .big-card { background: #fff; border: 0.5px solid #e0e0e0; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+          .big-card-title { font-size: 13px; font-weight: 500; color: #888; margin-bottom: 1.25rem; }
+          .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+          .bar-label { font-size: 13px; color: #555; min-width: 90px; }
+          .bar-track { flex: 1; height: 10px; background: #f0f0f0; border-radius: 5px; overflow: hidden; }
+          .bar-fill { height: 100%; border-radius: 5px; width: 0; transition: width 1s cubic-bezier(.4,0,.2,1); }
+          .bar-count { font-size: 13px; font-weight: 500; color: #111; min-width: 28px; text-align: right; }
+          .bar-pct { font-size: 11px; color: #aaa; min-width: 36px; text-align: right; }
+        </style>
 
-    </div>
-    <div class="stats-container">
+        <div class="stats-wrap">
+          <p class="stats-section-title">statistiques des projets</p>
 
-  <h2>📊 Statistiques des projets</h2>
+          <?php
+            $totalProjets = array_sum(array_column($statsStatut, 'total'));
+            $enCours = 0; $termines = 0;
+            foreach ($statsStatut as $s) {
+              if ($s['statut'] == 'En cours') $enCours = $s['total'];
+              if ($s['statut'] == 'Terminé') $termines = $s['total'];
+            }
+          ?>
 
-  <!-- STATUT -->
-  <div>
-    <h3>Par statut</h3>
-    <?php foreach ($statsStatut as $s) { ?>
-      <p><?= $s['statut'] ?> : <?= $s['total'] ?></p>
-    <?php } ?>
-  </div>
+          <!-- METRIC CARDS -->
+          <div class="metric-row">
+            <div class="metric-card">
+              <p class="metric-label">total projets</p>
+              <p class="metric-value" data-target="<?= $totalProjets ?>">0</p>
+            </div>
+            <div class="metric-card">
+              <p class="metric-label">en cours</p>
+              <p class="metric-value" data-target="<?= $enCours ?>">0</p>
+            </div>
+            <div class="metric-card">
+              <p class="metric-label">terminés</p>
+              <p class="metric-value" data-target="<?= $termines ?>">0</p>
+            </div>
+          </div>
 
-  <!-- DATE -->
-  <div>
-    <h3>Par mois</h3>
-    <?php foreach ($statsDate as $d) { ?>
-      <p><?= $d['mois'] ?> : <?= $d['total'] ?></p>
-    <?php } ?>
-  </div>
+          <!-- STATUT BARS — full width card -->
+          <div class="big-card">
+            <p class="big-card-title">répartition par statut</p>
+            <?php
+              $colors = ['#1D9E75','#378ADD','#EF9F27','#D85A30'];
+              $maxVal = !empty($statsStatut) ? max(array_column($statsStatut, 'total')) : 1;
+              $i = 0;
+              foreach ($statsStatut as $s) {
+                $pct = $totalProjets > 0 ? round(($s['total'] / $totalProjets) * 100) : 0;
+                $barPct = $maxVal > 0 ? round(($s['total'] / $maxVal) * 100) : 0;
+                $color = $colors[$i % count($colors)];
+            ?>
+              <div class="bar-row">
+                <span class="bar-label"><?= $s['statut'] ?></span>
+                <div class="bar-track">
+                  <div class="bar-fill" style="background:<?= $color ?>" data-pct="<?= $barPct ?>"></div>
+                </div>
+                <span class="bar-count"><?= $s['total'] ?></span>
+                <span class="bar-pct"><?= $pct ?>%</span>
+              </div>
+            <?php $i++; } ?>
+          </div>
 
-</div>
- 
+          <!-- MOIS CHART — full width card -->
+          <div class="big-card">
+            <p class="big-card-title">projets créés par mois</p>
+            <div style="position:relative;width:100%;height:200px;">
+              <canvas id="moisChart" role="img" aria-label="Projets par mois">Projets créés par mois.</canvas>
+            </div>
+          </div>
+
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+        <script>
+          // Animate counters
+          document.querySelectorAll('.metric-value').forEach(el => {
+            const target = parseInt(el.dataset.target);
+            let start = 0;
+            const step = Math.ceil(target / 30) || 1;
+            const timer = setInterval(() => {
+              start = Math.min(start + step, target);
+              el.textContent = start;
+              if (start >= target) clearInterval(timer);
+            }, 30);
+          });
+
+          // Animate bars
+          setTimeout(() => {
+            document.querySelectorAll('.bar-fill').forEach(el => {
+              el.style.width = el.dataset.pct + '%';
+            });
+          }, 150);
+
+          // Mois chart
+          const moisLabels = <?= json_encode(array_column($statsDate, 'mois')) ?>;
+          const moisData   = <?= json_encode(array_column($statsDate, 'total')) ?>;
+
+          new Chart(document.getElementById('moisChart'), {
+            type: 'bar',
+            data: {
+              labels: moisLabels,
+              datasets: [{
+                label: 'Projets',
+                data: moisData,
+                backgroundColor: '#1D9E75',
+                borderRadius: 6,
+                borderSkipped: false
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: { duration: 900, easing: 'easeOutQuart' },
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 12 }, color: '#999' } },
+                y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 12 }, color: '#999', stepSize: 1 }, beginAtZero: true }
+              }
+            }
+          });
+        </script>
+
+      </div>
+      <!-- END STATS SECTION -->
+
       <!-- TABLE DES PROJETS -->
       <table border="1">
         <tr>

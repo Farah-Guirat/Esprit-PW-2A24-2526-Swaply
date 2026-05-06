@@ -2,13 +2,16 @@
 
 class AIService
 {
+   
     private static string $apiKey = "";
 
     /* =========================
-        1. GET EMBEDDING (Gemini)
+        1. GET EMBEDDING
     ========================== */
     public static function getEmbedding(string $text): array
     {
+        $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=" . self::$apiKey;
+
         $payload = [
             "content" => [
                 "parts" => [
@@ -17,18 +20,16 @@ class AIService
             ]
         ];
 
-        $ch = curl_init();
+        $ch = curl_init($url);
 
-        curl_setopt($ch, CURLOPT_URL,
-"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=" . self::$apiKey
-);
-
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "Content-Type: application/json"
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => [
+                "Content-Type: application/json"
+            ],
+            CURLOPT_POSTFIELDS => json_encode($payload)
         ]);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 
         $response = curl_exec($ch);
 
@@ -57,8 +58,8 @@ class AIService
 
         for ($i = 0; $i < $count; $i++) {
             $dot += $a[$i] * $b[$i];
-            $normA += $a[$i] * $a[$i];
-            $normB += $b[$i] * $b[$i];
+            $normA += $a[$i] ** 2;
+            $normB += $b[$i] ** 2;
         }
 
         if ($normA == 0 || $normB == 0) return 0;
@@ -67,71 +68,63 @@ class AIService
     }
 
     /* =========================
-        3. CLEAN TEXT (important)
+        3. CLEAN TEXT
     ========================== */
     public static function cleanText(string $text): string
     {
-        $text = strtolower($text);
-        $text = trim($text);
-        $text = preg_replace('/\s+/', ' ', $text);
-
-        return $text;
+        return strtolower(trim(preg_replace('/\s+/', ' ', $text)));
     }
 
     /* =========================
-        4. MATCH SCORE
+        4. BUILD TEXT
+    ========================== */
+    public static function buildText(array $data): string
+    {
+        return self::cleanText(
+            ($data['titre'] ?? '') . ' ' .
+            ($data['description'] ?? '') . ' ' .
+            ($data['categorie'] ?? '') . ' ' .
+            ($data['niveau'] ?? '')
+        );
+    }
+
+    /* =========================
+        5. MATCH SCORE (IMPORTANT FIX)
     ========================== */
     public static function matchScore(string $text1, string $text2): float
     {
-        $text1 = self::cleanText($text1);
-        $text2 = self::cleanText($text2);
-
-        $vec1 = self::getEmbedding($text1);
-        $vec2 = self::getEmbedding($text2);
+        $vec1 = self::getEmbedding(self::cleanText($text1));
+        $vec2 = self::getEmbedding(self::cleanText($text2));
 
         return self::cosineSimilarity($vec1, $vec2);
     }
 
     /* =========================
-        5. MATCH LIST (offre vs demandes)
+        6. MATCH OFFRES / DEMANDES (FIXED)
     ========================== */
-    public static function matchOffre(array $offreText, array $demandes, float $threshold = 0.75): array
+    public static function matchOffre(array $offre, array $demandes, float $threshold = 0.75): array
     {
         $matches = [];
 
-        $offreVec = self::getEmbedding(self::cleanText($offreText));
+        // 🔥 FIX: build text + correct embedding call
+        $offreVec = self::getEmbedding(self::buildText($offre));
 
         foreach ($demandes as $d) {
 
-            $demandeVec = self::getEmbedding(self::cleanText($d["text"]));
+            $demandeVec = self::getEmbedding(self::buildText($d));
 
             $score = self::cosineSimilarity($offreVec, $demandeVec);
 
             if ($score >= $threshold) {
                 $matches[] = [
-                    "id" => $d["id"],
+                    "id" => $d["id_demande"] ?? $d["id"] ?? null,
                     "score" => round($score, 3)
                 ];
             }
         }
 
-        // tri décroissant
-        usort($matches, function ($a, $b) {
-            return $b["score"] <=> $a["score"];
-        });
+        usort($matches, fn($a, $b) => $b["score"] <=> $a["score"]);
 
         return $matches;
     }
-
-
-
-    public static function buildText(array $data): string
-{
-    return strtolower(
-        $data['titre'] . ' ' .
-        $data['description'] . ' ' .
-        $data['categorie'] . ' ' .
-        $data['niveau']
-    );
-}
 }

@@ -1,7 +1,7 @@
 <?php
 
-require_once "Config/Database.php";
-require_once "Services/AIService.php";
+require_once("../Config/Database.php");
+require_once("../Services/AIService.php");
 
 $pdo = Database::getInstance();
 

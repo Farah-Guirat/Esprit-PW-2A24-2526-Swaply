@@ -11,6 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        
 
 
     <style>
@@ -106,7 +107,7 @@
                 <div class="w-11 h-11 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl">
                     📊
                 </div>
-                <div>
+                <div> 
                     <h2 class="text-2xl font-bold text-gray-800">Statistiques des Offres</h2>
                     <p class="text-gray-500 text-sm">Analyse visuelle en temps réel</p>
                 </div>
@@ -457,6 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 <script>
+    //  CHARTT
 // Variables globales
 let doughnutChart = null;
 let barChart = null;

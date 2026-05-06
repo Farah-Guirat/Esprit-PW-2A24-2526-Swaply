@@ -5,8 +5,17 @@ require_once '../../controller/ReponseController.php';
 $controller    = new ReclamationController();
 $repController = new ReponseController();
 
-$stmt = $controller->afficher();
-$recs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Récupérer les réclamations avec les infos de l'expéditeur
+require_once '../../config/database.php';
+$stmtRecs = $conn->query("
+    SELECT r.*, 
+           u.prenom, u.nom, u.email, u.telephone,
+           CONCAT(u.prenom, ' ', u.nom) AS full_name
+    FROM reclamations r
+    LEFT JOIN utilisateurs u ON r.id_user = u.id_u
+    ORDER BY r.date_creation DESC
+");
+$recs = $stmtRecs->fetchAll(PDO::FETCH_ASSOC);
 
 function normalizeStatut(string $s): string {
     $s = strtolower(trim($s));
@@ -192,6 +201,60 @@ foreach ($recs as $r) {
 .st-opt input[type=radio] { accent-color:var(--teal); width:16px; height:16px; }
 .st-opt span { font-size:13px; font-weight:500; }
 
+/* ── Description Modal ── */
+.desc-modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.45);
+  backdrop-filter:blur(4px); z-index:9999;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity .25s;
+}
+.desc-modal-overlay.open { opacity:1; pointer-events:all; }
+.desc-modal-box {
+  background:white; border-radius:20px; padding:32px;
+  width:100%; max-width:520px;
+  transform:translateY(20px) scale(.97);
+  transition:transform .25s;
+  box-shadow:0 24px 48px rgba(0,0,0,.18);
+  position:relative;
+}
+.desc-modal-overlay.open .desc-modal-box { transform:translateY(0) scale(1); }
+.desc-modal-close {
+  position:absolute; top:16px; right:16px;
+  background:#f1f5f9; border:none; border-radius:50%;
+  width:32px; height:32px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; color:#64748b; transition:background .2s;
+}
+.desc-modal-close:hover { background:#e2e8f0; }
+.desc-modal-header {
+  display:flex; align-items:center; gap:10px;
+  margin-bottom:18px; padding-bottom:14px;
+  border-bottom:1px solid #f1f5f9;
+}
+.desc-modal-id {
+  font-size:12px; font-weight:700; color:var(--teal-d);
+  background:#f0fdfa; padding:3px 10px; border-radius:20px;
+}
+.desc-modal-meta {
+  display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;
+}
+.desc-modal-meta span {
+  font-size:12px; padding:3px 10px; border-radius:20px;
+  background:#f1f5f9; color:#475569; font-weight:500;
+}
+.desc-modal-body {
+  font-size:14px; line-height:1.75; color:#1e293b;
+  background:#f8fafc; border-radius:12px; padding:16px;
+  white-space:pre-wrap; word-break:break-word;
+  max-height:280px; overflow-y:auto;
+}
+.desc-modal-stars { color:#f59e0b; font-size:18px; }
+
+/* Clickable row hint */
+.adm-table tbody tr { cursor:pointer; }
+.adm-table tbody tr:hover td { background:#f0fdfa; }
+
 /* ── Toast ── */
 .adm-toast {
   position:fixed; bottom:24px; right:24px; z-index:99999;
@@ -284,6 +347,7 @@ foreach ($recs as $r) {
         <th>#ID</th>
         <th>Description</th>
         <th>Type</th>
+        <th>Expéditeur</th>
         <th>Utilisateur ciblé</th>
         <th>Note</th>
         <th>Statut</th>
@@ -305,8 +369,16 @@ foreach ($recs as $r) {
     ?>
     <tr data-desc="<?= strtolower(htmlspecialchars($rec['description'])) ?>"
         data-user="<?= strtolower(htmlspecialchars($rec['username_cible'] ?? '')) ?>"
+        data-sender="<?= strtolower(htmlspecialchars($rec['full_name'] ?? '')) ?>"
         data-statut="<?= $stLabel ?>"
         data-type="<?= strtolower($rec['type'] ?? '') ?>"
+        data-fulldesc="<?= htmlspecialchars($rec['description'], ENT_QUOTES) ?>"
+        data-recid="<?= $recId ?>"
+        data-rating="<?= (int)($rec['rating'] ?? 0) ?>"
+        data-typelabel="<?= ($rec['type'] ?? '') === 'company' ? 'Entreprise' : 'Personne' ?>"
+        data-cible="<?= htmlspecialchars($rec['username_cible'] ?? '', ENT_QUOTES) ?>"
+        data-stlabel="<?= $stLabel ?>"
+        onclick="openDescModal(this, event)"
         style="animation-delay:<?= $i * 0.03 ?>s">
       <td style="font-weight:700;color:#64748b">#<?= $recId ?></td>
       <td style="max-width:200px;color:#1e293b"><?= $desc ?></td>
@@ -314,6 +386,16 @@ foreach ($recs as $r) {
         <span class="badge-type">
           <?= ($rec['type'] ?? '') === 'company' ? '🏢 Entreprise' : '👤 Personne' ?>
         </span>
+      </td>
+      <td>
+        <?php if (!empty($rec['full_name'])): ?>
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <span style="font-weight:600;color:#1e293b"><?= htmlspecialchars($rec['full_name']) ?></span>
+            <span style="font-size:11px;color:#94a3b8"><?= htmlspecialchars($rec['email'] ?? '') ?></span>
+          </div>
+        <?php else: ?>
+          <span style="color:#cbd5e1;font-size:12px">Utilisateur #<?= (int)$rec['id_user'] ?></span>
+        <?php endif; ?>
       </td>
       <td>
         <?php if (!empty($rec['username_cible'])): ?>
@@ -358,6 +440,20 @@ foreach ($recs as $r) {
   <div class="adm-pagination">
     <span id="pgInfo">Affichage de <?= $total ?> résultats</span>
     <div class="pg-btns" id="pgBtns"></div>
+  </div>
+</div>
+
+<!-- ── Modal Description ── -->
+<div class="desc-modal-overlay" id="modalDesc">
+  <div class="desc-modal-box">
+    <button class="desc-modal-close" onclick="closeDescModal()">✕</button>
+    <div class="desc-modal-header">
+      <span class="desc-modal-id" id="descModalId">#00</span>
+      <span style="font-size:14px;font-weight:600;color:#1e293b">Réclamation</span>
+    </div>
+    <div class="desc-modal-meta" id="descModalMeta"></div>
+    <p style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Description</p>
+    <div class="desc-modal-body" id="descModalBody"></div>
   </div>
 </div>
 
@@ -433,12 +529,13 @@ function admFilter() {
 
     visibleRows = [];
     rows.forEach(row => {
-        const desc  = row.dataset.desc  || '';
-        const user  = row.dataset.user  || '';
-        const statut= row.dataset.statut|| '';
-        const type  = row.dataset.type  || '';
+        const desc   = row.dataset.desc   || '';
+        const user   = row.dataset.user   || '';
+        const sender = row.dataset.sender || '';
+        const statut = row.dataset.statut || '';
+        const type   = row.dataset.type   || '';
 
-        const matchQ  = !q  || desc.includes(q) || user.includes(q);
+        const matchQ  = !q  || desc.includes(q) || user.includes(q) || sender.includes(q);
         const matchSt = !st || statut.includes(st.replace('é','e').replace('î','i'));
         const matchTp = !tp || type === tp;
 
@@ -676,6 +773,47 @@ function deleteRec(id, btn) {
             showToast('Erreur réseau.', false);
         });
 }
+
+// ══════════════════════════════════════════
+//  DESCRIPTION MODAL
+// ══════════════════════════════════════════
+function openDescModal(row, event) {
+    // Ne pas ouvrir si on clique sur un bouton d'action
+    if (event.target.closest('button')) return;
+
+    const id       = row.dataset.recid;
+    const desc     = row.dataset.fulldesc;
+    const rating   = parseInt(row.dataset.rating) || 0;
+    const type     = row.dataset.typelabel;
+    const cible    = row.dataset.cible;
+    const stLabel  = row.dataset.stlabel;
+
+    document.getElementById('descModalId').textContent = '#' + id;
+
+    const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+    let stClass = 'st-attente', stIcon = '⏳';
+    if (stLabel === 'traité')   { stClass = 'st-traite'; stIcon = '✅'; }
+    else if (stLabel === 'en cours') { stClass = 'st-cours'; stIcon = '🔄'; }
+
+    document.getElementById('descModalMeta').innerHTML = `
+        <span class="badge-st ${stClass}">${stIcon} ${stLabel}</span>
+        <span>${type === 'Entreprise' ? '🏢' : '👤'} ${type}</span>
+        ${cible ? `<span style="color:var(--teal);font-weight:600">@${cible}</span>` : ''}
+        <span class="desc-modal-stars">${stars}</span>
+        <span style="color:#94a3b8">${rating}/5</span>
+    `;
+
+    document.getElementById('descModalBody').textContent = desc;
+    document.getElementById('modalDesc').classList.add('open');
+}
+
+function closeDescModal() {
+    document.getElementById('modalDesc').classList.remove('open');
+}
+
+document.getElementById('modalDesc').addEventListener('click', function(e) {
+    if (e.target === this) closeDescModal();
+});
 
 // Debounce search
 let _sTimer;

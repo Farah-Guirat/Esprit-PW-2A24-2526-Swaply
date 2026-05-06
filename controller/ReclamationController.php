@@ -16,7 +16,7 @@ class ReclamationController {
         global $conn;
 
         // 1. Njibou el info mta' el user elli baath[cite: 9]
-        $stmt = $conn->prepare("SELECT mail, num_tel, prenom FROM utilisateurs WHERE id = ?");
+        $stmt = $conn->prepare("SELECT email, telephone, prenom FROM utilisateurs WHERE id_u = ?");
         $stmt->execute([$id_user]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
@@ -25,8 +25,8 @@ class ReclamationController {
 
         // 2. Ken tsabet el reclamation, nabathou el klab (Notifs)[cite: 9]
         if ($ok && $user) {
-            $mail   = $user['mail'];
-            $tel    = $user['num_tel']; // Lezem ykoun b +216...[cite: 8]
+            $mail   = $user['email'];
+            $tel    = $user['telephone']; // Lezem ykoun b +216...[cite: 8]
             $prenom = $user['prenom'];
 
             if (!empty($mail)) {

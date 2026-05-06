@@ -1,6 +1,6 @@
 <?php
 $host = "localhost";
-$dbname = "web";
+$dbname = "swaply";
 $username = "root";
 $password = "";
 

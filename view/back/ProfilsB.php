@@ -335,15 +335,16 @@ $genderDisplay = rtrim($genderDisplay, ', ');
       <a href="swaplyB.php" class="menu-item" id="menu-dashboard">
         <i class="fa-solid fa-house"></i> Dashboard
       </a>
-      <a href="#" class="menu-item" id="menu-users">
-        <i class="fa-solid fa-users"></i> Utilisateurs
-      </a>
+      
       <a href="ProfilsB.php" class="menu-item active" id="menu-profiles">
         <i class="fa-solid fa-user"></i> Profils
       </a>
-      <a href="#" class="menu-item" id="menu-offres">
-        <i class="fa-solid fa-briefcase"></i> Offres & Demandes
+      <a href="/swaply/view/back/projets.php" onclick="showPage('projets')" class="menu-item" id="menu-projets">
+        <i class="fa-solid fa-file"></i> Projets
       </a>
+      <a href="/swaply/public/index.php?action=dashboard" class="menu-item" id="menu-dashboard">
+    <i class="fa-solid fa-briefcase"></i> Offres & Demandes
+</a>
       <a href="#" class="menu-item" id="menu-publications">
         <i class="fa-solid fa-newspaper"></i> Publications
       </a>

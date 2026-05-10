@@ -1,406 +1,149 @@
-# 🔐 Double Authentification par Email - Swaply
+# 🔄 Swaply
 
-## 🎉 Bienvenue!
+> A web platform for exchanging services between users — built with simplicity and community in mind.
 
-Un système complet de **double authentification par email** a été implémenté dans votre application Swaply.
-
-Quand un utilisateur crée un compte, il doit maintenant confirmer son email avant la création du compte.
-
----
-
-## 📖 Lire D'Abord
-
-**👉 Commencez par:** [`FINAL_STEPS.md`](FINAL_STEPS.md)
-
-Ce fichier vous donne les **3 étapes simples** pour activer le système.
+![HTML](https://img.shields.io/badge/HTML-E34F26?style=flat&logo=html5&logoColor=white)
+![CSS](https://img.shields.io/badge/CSS-1572B6?style=flat&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
+![PHP](https://img.shields.io/badge/PHP-777BB4?style=flat&logo=php&logoColor=white)
+![AI](https://img.shields.io/badge/AI-Powered-FF6F00?style=flat&logo=openai&logoColor=white)
 
 ---
 
-## 📚 Documentation Complète
+## 📋 Table of Contents
 
-Voici tous les documents (dans l'ordre recommandé):
-
-| # | Fichier | Objectif | Temps |
-|---|---------|----------|-------|
-| 1️⃣ | `FINAL_STEPS.md` | 🚀 Activation rapide | 2 min |
-| 2️⃣ | `QUICKSTART.md` | ⚡ Démarrage rapide | 3 min |
-| 3️⃣ | `INSTALLATION_DOUBLE_AUTH.md` | 📋 Guide détaillé | 10 min |
-| 4️⃣ | `DOUBLE_AUTH_README.md` | 🔧 Documentation technique | 15 min |
-| 5️⃣ | `CHECKLIST_INSTALLATION.md` | ✅ Validation complète | 20 min |
-| 6️⃣ | `RESUME_MODIFICATIONS.md` | 📊 Résumé des changements | 5 min |
-| 7️⃣ | `INDEX.md` | 📑 Index complet | 5 min |
-| 8️⃣ | `SQL_QUERIES.sql` | 🗄️ Administration BD | À la demande |
+- [About](#about)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## 🚀 Installation Rapide (1 Minute)
+## 📖 About
 
-### Étape 1: Initialiser la BD
-```
-http://localhost/swaply/config/migrations.php
-```
+**Swaply** is a service-exchange web application developed as part of the **Web Programming (PW)** module — 2nd Year Integrated Preparatory Program at **Esprit School of Engineering, Tunisia** (Academic Year 2025–2026).
 
-### Étape 2: Vérifier
-```
-http://localhost/swaply/config/test_double_auth.php
-```
-
-### Étape 3: Utiliser
-```
-http://localhost/swaply/view/front/register.php
-```
-
-**✅ C'est tout!**
+The platform allows users to post, discover, and exchange services with one another — no money involved, just skills and time.
 
 ---
 
-## ✨ Qu'est-ce que Vous Obtenez?
+## ✨ Features
 
-### 📧 Email de Vérification
-```
-┌─────────────────────────────────┐
-│ Vérification de Compte Swaply   │
-├─────────────────────────────────┤
-│                                 │
-│ Email: user@example.com         │
-│                                 │
-│ [✓ Oui, c'est moi]              │
-│ [✗ Non, ce n'est pas moi]       │
-│                                 │
-│ Valide pendant 24h              │
-└─────────────────────────────────┘
+- 🔐 **User Authentication** — Secure sign up, login and session management
+- 📁 **Projects** — Create and manage your exchange projects
+- 📢 **Offers & Requests** — Post services you offer or request what you need
+- 💬 **Messaging** — Real-time chat between users to coordinate exchanges
+- 🚨 **Reclamations** — Submit and track complaints or disputes
+- 📝 **Blog** — Share articles, tips and community updates
+- 🤖 **AI Integration** — Smart features powered by artificial intelligence
+
+---
+
+## 🛠 Tech Stack
+
+| Technology | Role |
+|------------|------|
+| HTML | Structure & markup |
+| CSS | Styling & layout |
+| JavaScript | Interactivity & logic |
+| PHP | Backend & server-side logic |
+| AI | Intelligent features & automation |
+
+---
+
+## ⚙️ Installation
+
+1. **Clone the repository**
+
+```bash
+git clone https://github.com/Projet-technologies-web-2A/swaply.git
+cd swaply
 ```
 
-### 💬 Messages d'Interface
-```
-✓ Bleu: "Un email de vérification est envoyé à user@email.com"
-✗ Rouge: "Veuillez vérifier vos informations"
-```
+2. **Set up a local PHP server**
 
-### 🔐 Sécurité
-- Tokens uniques et sécurisés
-- Expiration après 24h
-- Validation double (client + serveur)
-- Pas de dépendances externes
+Make sure you have **PHP** and **MySQL** installed (via [XAMPP](https://www.apachefriends.org/) or [WAMP](https://www.wampserver.com/)).
 
----
+* Copy the project into your server's root folder:
+  * XAMPP → `htdocs/swaply`
+  * WAMP → `www/swaply`
 
-## 📦 Ce Qui a Été Créé
+3. **Configure the database**
 
-### 5 Fichiers PHP
-- ✅ `config/migrations.php` - Initialise la BD
-- ✅ `config/EmailManager.php` - Envoie les emails
-- ✅ `model/EmailVerification.php` - Gère les tokens
-- ✅ `view/front/verify_email.php` - Page de vérification
-- ✅ `config/test_double_auth.php` - Script de test
+* Open **phpMyAdmin** at `http://localhost/phpmyadmin`
+* Create a new database named `swaply`
+* Import the provided SQL file:
 
-### 2 Fichiers Modifiés
-- 📝 `controller/UserC.php` - Nouveau processus signup
-- 📝 `view/front/register.php` - Messages de vérification
-
-### 7 Documents
-- 📄 `FINAL_STEPS.md` ← **Lisez CECI D'ABORD**
-- 📄 `QUICKSTART.md`
-- 📄 `INSTALLATION_DOUBLE_AUTH.md`
-- 📄 `DOUBLE_AUTH_README.md`
-- 📄 `CHECKLIST_INSTALLATION.md`
-- 📄 `RESUME_MODIFICATIONS.md`
-- 📄 `INDEX.md`
-- 📄 `SQL_QUERIES.sql`
-
----
-
-## 🔄 Flux d'Inscription
-
-```
-1. Utilisateur remplit le formulaire
-   ↓
-2. Validation JavaScript (pas HTML5)
-   ↓
-3. Email de vérification envoyé
-   ↓
-4. Message bleu affiché: "Un email est envoyé à..."
-   ↓
-5. Utilisateur clique sur le lien
-   ↓
-   ├─ "Oui, c'est moi"
-   │   ├─ Compte créé
-   │   ├─ Connexion auto
-   │   └─ Redirect swaplyf.php ✅
-   │
-   └─ "Non, ce n'est pas moi"
-       ├─ Inscription annulée
-       ├─ Message rouge affiché
-       └─ Formulaire réinitialisé
+```bash
+swaply/database/swaply.sql
 ```
 
----
+4. **Configure environment**
 
-## 💡 Points Clés
+* Open `config.php` and update your database credentials:
 
-✅ **Zero dépendances** - PHP pur, pas de Composer
-✅ **Production-ready** - Sécurisé et testé
-✅ **Facile à installer** - 3 étapes, 1 minute
-✅ **Bien documenté** - 8 fichiers de documentation
-✅ **Entièrement en français** - Messages et docs
-✅ **Responsive** - Mobile, tablet, desktop
-✅ **Compatible** - Avec le code existant
-✅ **Sécurisé** - Tokens, hash, validation double
-
----
-
-## 🎯 Prochaines Actions
-
-### 📌 Priorité 1 (IMMÉDIATE)
-1. Ouvrez: [`FINAL_STEPS.md`](FINAL_STEPS.md)
-2. Suivez les 3 étapes
-3. Testez l'inscription
-
-### 📌 Priorité 2 (APRÈS ACTIVATION)
-1. Lisez: [`QUICKSTART.md`](QUICKSTART.md)
-2. Consultez: [`INSTALLATION_DOUBLE_AUTH.md`](INSTALLATION_DOUBLE_AUTH.md)
-3. Configurez SMTP (optionnel pour production)
-
-### 📌 Priorité 3 (ADMINISTRATION)
-1. Consultez: [`SQL_QUERIES.sql`](SQL_QUERIES.sql)
-2. Utilisez: [`CHECKLIST_INSTALLATION.md`](CHECKLIST_INSTALLATION.md)
-3. Référez-vous à: [`RESUME_MODIFICATIONS.md`](RESUME_MODIFICATIONS.md)
-
----
-
-## 🚦 Statut de l'Installation
-
-| Étape | Statut | Actions |
-|-------|--------|---------|
-| **Implémentation** | ✅ Complète | Aucune |
-| **Code** | ✅ Présent | Aucune |
-| **Base de Données** | ⏳ À initialiser | Voir `FINAL_STEPS.md` |
-| **Test** | ⏳ À faire | Voir `FINAL_STEPS.md` |
-| **Production** | ⏳ Prêt | Voir `INSTALLATION_DOUBLE_AUTH.md` |
-
----
-
-## ❓ Questions Fréquentes
-
-### Q: Dois-je installer quelque chose?
-**R:** Non! Aucune dépendance. Juste exécuter un script SQL.
-
-### Q: Combien de temps pour l'installation?
-**R:** 1 minute. Voir `FINAL_STEPS.md`.
-
-### Q: Comment activer le système?
-**R:** 3 étapes simples. Voir `FINAL_STEPS.md`.
-
-### Q: Les emails réels fonctionnent?
-**R:** En local, utilisez la fonction PHP `mail()`. Pour la production, configurez SMTP.
-
-### Q: Comment tester sans email réel?
-**R:** Utilisez le script `config/test_double_auth.php`.
-
-### Q: Puis-je personnaliser les messages?
-**R:** Oui! Modifiez `EmailManager.php` et `register.php`.
-
-### Q: C'est sécurisé?
-**R:** Oui! Tokens uniques, hash, validation double, pas de dépendances.
-
-### Q: Est-ce compatible avec Face ID?
-**R:** Oui! Le système Face ID existant n'est pas affecté.
-
----
-
-## 🐛 Support
-
-### Si quelque chose ne fonctionne pas:
-
-1. **Lisez `FINAL_STEPS.md`** - Étapes d'activation
-2. **Vérifiez `config/test_double_auth.php`** - Diagnostique
-3. **Consultez `CHECKLIST_INSTALLATION.md`** - Validation
-4. **Vérifiez `SQL_QUERIES.sql`** - Commandes SQL utiles
-
----
-
-## 📊 Vue d'Ensemble Technique
-
-### Fichiers Créés
-
-```
-config/
-├── migrations.php (Script BD)
-├── EmailManager.php (Envoi email)
-└── test_double_auth.php (Diagnostic)
-
-model/
-└── EmailVerification.php (Gestion tokens)
-
-view/front/
-└── verify_email.php (Vérification)
+```php
+define('DB_HOST', 'localhost');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_NAME', 'swaply');
 ```
 
-### Fichiers Modifiés
+5. **Launch the app**
 
-```
-controller/
-└── UserC.php (+50 lignes)
-
-view/front/
-└── register.php (+30 lignes)
-```
-
-### Base de Données
-
-```sql
--- Table créée
-CREATE TABLE email_verification_tokens (...)
-
--- Colonne ajoutée
-ALTER TABLE utilisateurs ADD COLUMN email_verified INT
-```
+* Start Apache & MySQL in XAMPP/WAMP
+* Visit `http://localhost/swaply` in your browser
 
 ---
 
-## ✅ Validation Complète
+## 🚀 Usage
 
-Après activation, le système:
-
-- ✅ Crée un token unique pour chaque demande
-- ✅ Envoie un email avec 2 boutons
-- ✅ Crée le compte si "Oui"
-- ✅ Annule si "Non"
-- ✅ Affiche les messages corrects
-- ✅ Supprime les tokens après utilisation
-- ✅ Expire les tokens après 24h
-- ✅ Hash les mots de passe
-- ✅ Valide côté client ET serveur
-- ✅ Fonctionne sur mobile/tablet/desktop
+1. Register a new account or log in with existing credentials.
+2. Create a **project** to organize your service exchanges.
+3. Browse **offers** from other users or post a **request** for a service you need.
+4. Use the **messaging** system to coordinate with other users.
+5. Read and publish articles on the **blog**.
+6. Submit a **reclamation** if you encounter any issue.
+7. Let the **AI** assist you with smart recommendations and automation.
 
 ---
 
-## 🎓 Apprentissage
+## 🤝 Contributing
 
-**Que vous allez apprendre:**
+Contributions are welcome! Here's how to get started:
 
-- Comment implémenter une double authentification
-- Comment envoyer des emails en PHP
-- Comment gérer les tokens de sécurité
-- Comment valider les formulaires
-- Comment sécuriser les données utilisateur
+1. Fork this repository
+2. Create a new branch:
 
-**Vous pouvez personnaliser:**
-
-- Le texte des emails
-- Le format de l'interface
-- Les délais d'expiration
-- Le serveur SMTP
-- Les messages d'erreur
-
----
-
-## 🌟 Avantages du Système
-
-1. **Sécurité Renforcée**
-   - Vérifie que l'utilisateur contrôle l'email
-   - Prévient les inscriptions abusives
-
-2. **Expérience Utilisateur**
-   - Processus simple et clair
-   - Messages en français
-   - Design responsive
-
-3. **Flexibilité**
-   - Aucune dépendance
-   - Facile à modifier
-   - Prêt pour la production
-
-4. **Maintenabilité**
-   - Code bien documenté
-   - 8 fichiers d'aide
-   - Facile à dépanner
-
----
-
-## 🎯 Prochaines Étapes
-
-1. **👉 Ouvrez [`FINAL_STEPS.md`](FINAL_STEPS.md)**
-2. Suivez les 3 étapes d'activation
-3. Testez l'inscription
-4. Lisez la documentation au besoin
-
----
-
-## 🎉 Conclusion
-
-Vous avez tout ce qu'il faut pour:
-
-✅ Activer la double authentification
-✅ Tester le système
-✅ Déployer en production
-✅ Maintenir et personnaliser
-✅ Comprendre comment ça fonctionne
-
-**Commencez maintenant par [`FINAL_STEPS.md`](FINAL_STEPS.md)!** 🚀
-
----
-
-## 📞 Besoin d'Aide?
-
-- 📖 Consultez les documents
-- 🧪 Utilisez le script de test
-- 📊 Vérifiez la base de données
-- ✅ Suivez la checklist
-
-**Tout est documenté et prêt!** ✨
-
----
-
-## 📄 Fichiers Inclus
-
-```
-SWAPLY/
-├── 📄 README.md (CE FICHIER)
-├── 📄 FINAL_STEPS.md ← COMMENCEZ ICI
-├── 📄 QUICKSTART.md
-├── 📄 INSTALLATION_DOUBLE_AUTH.md
-├── 📄 DOUBLE_AUTH_README.md
-├── 📄 CHECKLIST_INSTALLATION.md
-├── 📄 RESUME_MODIFICATIONS.md
-├── 📄 INDEX.md
-├── 📄 SQL_QUERIES.sql
-│
-├── config/
-│   ├── migrations.php ✅ NOUVEAU
-│   ├── EmailManager.php ✅ NOUVEAU
-│   └── test_double_auth.php ✅ NOUVEAU
-│
-├── model/
-│   └── EmailVerification.php ✅ NOUVEAU
-│
-├── view/front/
-│   └── verify_email.php ✅ NOUVEAU
-│
-├── controller/
-│   └── UserC.php 📝 MODIFIÉ
-│
-└── view/front/
-    └── register.php 📝 MODIFIÉ
+```bash
+git checkout -b feature/your-feature-name
 ```
 
+3. Make your changes and commit:
+
+```bash
+git commit -m "Add: your feature description"
+```
+
+4. Push to your branch:
+
+```bash
+git push origin feature/your-feature-name
+```
+
+5. Open a **Pull Request** and describe your changes
+
+Please follow the existing code style and keep commits clear and focused.
+
 ---
 
-**Créé pour Swaply - 2026** ✨
+## 📄 License
 
-**Bonne chance et bon code!** 🚀
-
----
-
-## 🔗 Raccourcis Rapides
-
-- 🚀 Activer: [`FINAL_STEPS.md`](FINAL_STEPS.md)
-- ⚡ Rapide: [`QUICKSTART.md`](QUICKSTART.md)
-- 📋 Détails: [`INSTALLATION_DOUBLE_AUTH.md`](INSTALLATION_DOUBLE_AUTH.md)
-- 🔧 Code: [`DOUBLE_AUTH_README.md`](DOUBLE_AUTH_README.md)
-- ✅ Tester: `http://localhost/swaply/config/test_double_auth.php`
-- 🗄️ SQL: [`SQL_QUERIES.sql`](SQL_QUERIES.sql)
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
 
-**COMMENCEZ MAINTENANT:** Ouvrez [`FINAL_STEPS.md`](FINAL_STEPS.md)
+<p align="center">Made with ❤️ at Esprit School of Engineering — Tunisia</p>

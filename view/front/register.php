@@ -36,6 +36,9 @@ if (isset($_GET['error'])) {
         case 'verification_failed':
             $errorMessage = 'Erreur lors de l\'envoi de l\'email de vérification.';
             break;
+        case 'local_creation_failed':
+            $errorMessage = 'Impossible de créer le compte en local. Vérifiez les logs et réessayez.';
+            break;
         default:
             $errorMessage = 'Erreur inconnue.';
     }
@@ -528,8 +531,8 @@ function validateSignup() {
         return false;
     }
 
-    if (phone.length > 12 || !/^[0-9]+$/.test(phone)) {
-        errorMsg.innerHTML = "Numéro de téléphone invalide.";
+    if (phone.length > 15 || !/^[\+\d\s]+$/.test(phone)) {
+        errorMsg.innerHTML = "Numéro de téléphone invalide (chiffres, espaces, + uniquement).";
         return false;
     }
 

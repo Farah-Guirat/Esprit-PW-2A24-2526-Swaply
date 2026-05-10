@@ -25,7 +25,8 @@ $photo = $_SESSION['user']['photo'] ?? null;
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="assets/css/style.css">
+      <link rel="stylesheet" href="../src/assets/css/style.css">
+
   
   <style>
     .hero-bg {
@@ -140,19 +141,19 @@ $photo = $_SESSION['user']['photo'] ?? null;
       </div>
 
       <nav class="flex items-center gap-8 text-sm font-medium">
-        <a href="index.html" class="nav-link active">Accueil</a>
+        <a href="swaplyf.php" class="nav-link">Accueil</a>
         <a href="Profil.php" class="nav-link">Profils</a>
-        <a href="projets.html" class="nav-link">Projets</a>
-        <a href="offres.html" class="nav-link">Offres</a>
-        <a href="demandes.html" class="nav-link">Demandes</a>
-        <a href="publications.html" class="nav-link">Publications</a>
-        <a href="messages.html" class="nav-link">Messages</a>
-        <a href="reclamations.html" class="nav-link">Réclamations</a>
+        <a href="projets.php" class="nav-link">Projets</a>
+        <a href="/swaply/public/index.php?action=choice" class="nav-link">Demandes</a>
+        <a href="/swaply/public/index.php?action=choicee" class="nav-link">Offres</a>
+        <a href="listepublication.php" class="nav-link">Publications</a>
+        <a href="Messages.php" class="nav-link">Messages</a>
+        <a href="reclamations.php" class="nav-link">Réclamations</a>
       </nav>
 
-      <div class="w-10 h-10 bg-teal-100 rounded-2xl overflow-hidden border-2 border-white shadow cursor-pointer relative" onclick="togglePhotoMenu()">
+      <div onclick="window.location.href='Profil.php'" class="w-10 h-10 bg-teal-100 rounded-2xl overflow-hidden border-2 border-white shadow cursor-pointer relative" onclick="togglePhotoMenu()">
         <?php if ($photo): ?>
-          <img src="../../uploads/profiles/<?= htmlspecialchars($photo) ?>" alt="Profil" class="w-full h-full object-cover" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+          <img src="/swaply/uploads/profiles/<?= htmlspecialchars($photo) ?>" alt="Profil" class="w-full h-full object-cover" style="width: 100%; height: 100%; object-fit: cover; display: block;">
         <?php else: ?>
           <div class="w-full h-full flex items-center justify-center text-teal-600 font-bold text-lg">
             <?= strtoupper(substr($_SESSION['user']['nom'], 0, 1) . substr($_SESSION['user']['prenom'], 0, 1)) ?>
@@ -222,37 +223,37 @@ $photo = $_SESSION['user']['photo'] ?? null;
         <p class="text-gray-500 mt-2">Découvrez les membres de la communauté</p>
       </a>
 
-      <a href="projets.html" class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200">
+      <a href="/swaply/view/front/projets.php" class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200">
         <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-3xl mb-5">📁</div>
         <h3 class="text-xl font-semibold">Projets</h3>
         <p class="text-gray-500 mt-2">Explorez les projets et réalisations</p>
       </a>
 
-      <a href="offres.html" class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200">
+      <a href="/swaply/public/index.php?action=choicee" class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200">
         <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mb-5">💼</div>
         <h3 class="text-xl font-semibold">Offres</h3>
         <p class="text-gray-500 mt-2">Consultez les offres de collaboration</p>
       </a>
 
-      <a href="demandes.html" class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200">
+      <a href="/swaply/public/index.php?action=choicee" class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200">
         <div class="w-14 h-14 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center text-3xl mb-5">📢</div>
         <h3 class="text-xl font-semibold">Demandes</h3>
         <p class="text-gray-500 mt-2">Trouvez les demandes de services</p>
       </a>
 
-      <a href="publications.html" class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200">
+      <a href="listepublication.php" class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200">
         <div class="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center text-3xl mb-5">📰</div>
         <h3 class="text-xl font-semibold">Publications</h3>
         <p class="text-gray-500 mt-2">Actualités et partages de la communauté</p>
       </a>
 
-      <a href="messages.html" class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200">
+      <a href="Messages.php" class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200">
         <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl mb-5">💬</div>
         <h3 class="text-xl font-semibold">Messages</h3>
         <p class="text-gray-500 mt-2">Vos conversations privées</p>
       </a>
 
-      <a href="reclamations.html" class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200">
+      <a href="reclamations.php" class="card-hover bg-white rounded-3xl p-6 border border-transparent hover:border-teal-200">
         <div class="w-14 h-14 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center text-3xl mb-5">⚠️</div>
         <h3 class="text-xl font-semibold">Réclamations</h3>
         <p class="text-gray-500 mt-2">Signalez un problème ou une réclamation</p>

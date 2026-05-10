@@ -599,12 +599,12 @@ $user = $userModel->getUserById($id);
   <ul class="nav-links">
     <li><a href="swaplyf.php">Accueil</a></li>
     <li><a href="#" class="active">Profils</a></li>
-    <li><a href="#">Projets</a></li>
-    <li><a href="#">Offres</a></li>
-    <li><a href="#">Demandes</a></li>
+    <li><a href="/swaply/view/front/projets.php">Projets</a></li>
+<a href="/swaply/public/index.php?action=choicee">Offres</a>
+<a href="/swaply/public/index.php?action=choice">Demandes</a>
     <li><a href="#">Publications</a></li>
-    <li><a href="#">Messages</a></li>
-    <li><a href="#">Réclamations</a></li>
+    <li><a href="Messages.php">Messages</a></li>
+    <li><a href="/swaply/view/front/reclamations.php">Réclamations</a></li>
   </ul>
   <div class="nav-right">
     <div class="nav-notif">

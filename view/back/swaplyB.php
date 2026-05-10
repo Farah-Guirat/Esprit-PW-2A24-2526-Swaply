@@ -36,23 +36,28 @@ $adminPhoto = $_SESSION['user']['photo'] ?? null;
     </div>
 
     <div class="menu">
-      <a href="#" onclick="showPage('dashboard')" class="menu-item active" id="menu-dashboard">
+       <a href="#" onclick="showPage('dashboard')" class="menu-item active" id="menu-dashboard">
         <i class="fa-solid fa-house"></i> Dashboard
-      </a>
-      <a href="#" onclick="showPage('users')" class="menu-item" id="menu-users">
-        <i class="fa-solid fa-users"></i> Utilisateurs
       </a>
       <a href="ProfilsB.php" class="menu-item" id="menu-profiles">
         <i class="fa-solid fa-user"></i> Profils
       </a>
-      <a href="#" onclick="showPage('offres')" class="menu-item" id="menu-offres">
-        <i class="fa-solid fa-briefcase"></i> Offres & Demandes
+       <a href="/swaply/view/back/projets.php" onclick="showPage('projets')" class="menu-item" id="menu-projets">
+        <i class="fa-solid fa-file"></i> Projets
       </a>
+      
+     <a href="/swaply/public/index.php?action=dashboard" class="menu-item" id="menu-dashboard">
+    <i class="fa-solid fa-briefcase"></i> Offres & Demandes
+</a>
+      
       <a href="#" onclick="showPage('publications')" class="menu-item" id="menu-publications">
         <i class="fa-solid fa-newspaper"></i> Publications
       </a>
-      <a href="#" onclick="showPage('conversations')" class="menu-item" id="menu-conversations">
+      <a href="/swaply/view/back/conversations.php" class="menu-item" id="menu-conversations">
         <i class="fa-solid fa-comment-dots"></i> Conversations
+      </a>
+      <a href="/swaply/view/back/messages.php" class="menu-item" id="menu-messages">
+        <i class="fa-solid fa-envelope"></i> Messages
       </a>
       <a href="#" onclick="showPage('reclamations')" class="menu-item" id="menu-reclamations">
         <i class="fa-solid fa-exclamation-triangle"></i> Réclamations
@@ -147,5 +152,6 @@ $adminPhoto = $_SESSION['user']['photo'] ?? null;
 </div>
 
 <script src="script.js"></script>
+<script src="../../assets/recl/script.js"></script>
 </body>
 </html>

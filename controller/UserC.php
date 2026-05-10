@@ -6,8 +6,7 @@ require_once "../config/EmailManager.php";
 require_once "../model/User.php";
 require_once "../model/EmailVerification.php";
 
-$db = new Database();
-$conn = $db->connect();
+$conn = Database::getInstance();
 $userModel = new User($conn);
 $emailVerification = new EmailVerification($conn);
 $emailManager = new EmailManager();
@@ -150,6 +149,7 @@ if (isset($_POST['login'])) {
 
     if ($user) {
         $_SESSION['user'] = $user;
+        $_SESSION['id_user'] = $user['id_u'];  // ✅ Pour compatibilité avec messagerie.php
 
         if ($email === 'klai.aziz@admin.tn') {
             header("Location: /swaply/view/back/swaplyB.php");

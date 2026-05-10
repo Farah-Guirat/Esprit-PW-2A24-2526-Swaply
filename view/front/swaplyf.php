@@ -25,7 +25,8 @@ $photo = $_SESSION['user']['photo'] ?? null;
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="assets/css/style.css">
+      <link rel="stylesheet" href="../src/assets/css/style.css">
+
   
   <style>
     .hero-bg {
@@ -139,20 +140,21 @@ $photo = $_SESSION['user']['photo'] ?? null;
         <h1 class="text-2xl font-bold text-gray-800">Swaply</h1>
       </div>
 
+     
       <nav class="flex items-center gap-8 text-sm font-medium">
-        <a href="index.html" class="nav-link active">Accueil</a>
-        <a href="Profil.php" class="nav-link">Profils</a>
+        <a href="swaplyf.php" class="nav-link ">Accueil</a>
+        <a href="profils.html" class="nav-link">Profils</a>
         <a href="projets.html" class="nav-link">Projets</a>
-        <a href="offres.html" class="nav-link">Offres</a>
-        <a href="demandes.html" class="nav-link">Demandes</a>
+       <a href="/swaply/public/index.php?action=choice">Demandes</a>
+       <a href="/swaply/public/index.php?action=choicee">Offres</a>
         <a href="publications.html" class="nav-link">Publications</a>
         <a href="messages.html" class="nav-link">Messages</a>
-        <a href="reclamations.html" class="nav-link">Réclamations</a>
+        <a href="/swaply/view/front/reclamations.php" class="nav-link">Réclamations</a>
       </nav>
 
-      <div class="w-10 h-10 bg-teal-100 rounded-2xl overflow-hidden border-2 border-white shadow cursor-pointer relative" onclick="togglePhotoMenu()">
+      <div onclick="window.location.href='/swaply/view/front/Profil.php'" class="w-10 h-10 bg-teal-100 rounded-2xl overflow-hidden border-2 border-white shadow cursor-pointer relative" onclick="togglePhotoMenu()">
         <?php if ($photo): ?>
-          <img src="../../uploads/profiles/<?= htmlspecialchars($photo) ?>" alt="Profil" class="w-full h-full object-cover" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+          <img src="/swaply/uploads/profiles/<?= htmlspecialchars($photo) ?>">>" alt="Profil" class="w-full h-full object-cover" style="width: 100%; height: 100%; object-fit: cover; display: block;">
         <?php else: ?>
           <div class="w-full h-full flex items-center justify-center text-teal-600 font-bold text-lg">
             <?= strtoupper(substr($_SESSION['user']['nom'], 0, 1) . substr($_SESSION['user']['prenom'], 0, 1)) ?>

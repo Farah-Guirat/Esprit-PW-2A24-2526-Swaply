@@ -36,7 +36,7 @@ $adminPhoto = $_SESSION['user']['photo'] ?? null;
     </div>
 
     <div class="menu">
-      <a href="#" onclick="showPage('dashboard')" class="menu-item active" id="menu-dashboard">
+       <a href="#" onclick="showPage('dashboard')" class="menu-item active" id="menu-dashboard">
         <i class="fa-solid fa-house"></i> Dashboard
       </a>
       <a href="#" onclick="showPage('users')" class="menu-item" id="menu-users">
@@ -45,9 +45,10 @@ $adminPhoto = $_SESSION['user']['photo'] ?? null;
       <a href="ProfilsB.php" class="menu-item" id="menu-profiles">
         <i class="fa-solid fa-user"></i> Profils
       </a>
-      <a href="#" onclick="showPage('offres')" class="menu-item" id="menu-offres">
-        <i class="fa-solid fa-briefcase"></i> Offres & Demandes
-      </a>
+     <a href="/swaply/public/index.php?action=dashboard" class="menu-item" id="menu-dashboard">
+    <i class="fa-solid fa-briefcase"></i> Offres & Demandes
+</a>
+      
       <a href="#" onclick="showPage('publications')" class="menu-item" id="menu-publications">
         <i class="fa-solid fa-newspaper"></i> Publications
       </a>
@@ -147,5 +148,6 @@ $adminPhoto = $_SESSION['user']['photo'] ?? null;
 </div>
 
 <script src="script.js"></script>
+<script src="../../assets/recl/script.js"></script>
 </body>
 </html>

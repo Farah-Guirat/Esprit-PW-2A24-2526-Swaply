@@ -244,7 +244,7 @@ $_SESSION['captcha_answer_login'] = $captchaAnswer;
 
         <p class="form-sub">Enter your email and password to sign in</p>
 
-    <form method="POST" action="../../controller/UserC.php" onsubmit="return validateLogin()">
+    <form method="POST" action="/swaply/controller/UserC.php" onsubmit="return validateLogin()">
 
     <label class="form-label">Email</label>
     <input class="form-input" type="text" name="email" id="email" placeholder="Your email address" />

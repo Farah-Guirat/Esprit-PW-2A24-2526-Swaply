@@ -444,13 +444,13 @@ $photo = $profile['photo'] ?? null;
       <a href="ProfilsB.php" class="menu-item active" id="menu-profiles">
         <i class="fa-solid fa-user"></i> Profils
       </a>
-      <a href="#" class="menu-item" id="menu-offres">
+      <a href="/swaply/public/index.php?action=dashboard" class="menu-item" id="menu-offres">
         <i class="fa-solid fa-briefcase"></i> Offres & Demandes
       </a>
-      <a href="#" class="menu-item" id="menu-publications">
+      <a href="/swaply/view/back/publication_back.php" class="menu-item" id="menu-publications">
         <i class="fa-solid fa-newspaper"></i> Publications
       </a>
-      <a href="#" class="menu-item" id="menu-conversations">
+      <a href="/swaply/view/back/conversations.php" class="menu-item" id="menu-conversations">
         <i class="fa-solid fa-comment-dots"></i> Conversations
       </a>
       <a href="#" class="menu-item" id="menu-reclamations">

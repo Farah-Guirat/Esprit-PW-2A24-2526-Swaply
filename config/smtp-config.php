@@ -13,11 +13,11 @@
 
 return [
     'smtp' => [
-        'enabled' => true, // Changer à true pour activer SMTP
+        'enabled' => true,
         'host' => 'smtp.gmail.com',
         'port' => 587,
-        'username' => 'klaiaziz07@gmail.com', // ← À REMPLACER
-        'password' => 'yojr cxkz wzfw wnvl', // ← À REMPLACER (App Password de Google)
+        'username' => 'klaiaziz07@gmail.com',
+        'password' => 'yojr cxkz wzfw wnvl', // Vérifiez que c'est le bon App Password
         'encryption' => 'tls',
     ],
     'from_email' => 'klaiaziz07@gmail.com',

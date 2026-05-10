@@ -14,6 +14,9 @@ class EmailVerification {
      * Créer un token de vérification
      */
     public function createToken($email, $userData) {
+        // Supprimer les anciens tokens pour cet email
+        $this->deleteTokensByEmail($email);
+        
         // Générer un token unique
         $token = bin2hex(random_bytes(32));
         
@@ -69,6 +72,17 @@ class EmailVerification {
         return false;
     }
 
+    public function deleteTokensByEmail($email) {
+        try {
+            $sql = "DELETE FROM email_verification_tokens WHERE email = :email";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':email', $email);
+            $stmt->execute();
+        } catch (Exception $e) {
+            error_log("Error deleting tokens for email $email: " . $e->getMessage());
+        }
+    }
+
     public function getResetTokenData($token) {
         try {
             $sql = "SELECT * FROM email_verification_tokens WHERE token = :token AND expires_at > NOW()";
@@ -94,18 +108,6 @@ class EmailVerification {
             return false;
         }
     }
-
-    public function deleteResetToken($token) {
-        try {
-            $sql = "DELETE FROM email_verification_tokens WHERE token = :token";
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':token', $token);
-            return $stmt->execute();
-        } catch (Exception $e) {
-            error_log("Error deleting reset token: " . $e->getMessage());
-            return false;
-        }
-    }
     
     /**
      * Vérifier et valider un token
@@ -126,12 +128,6 @@ class EmailVerification {
             }
             
             if ($action === 'confirm') {
-                // Marquer comme vérifié
-                $updateSql = "UPDATE email_verification_tokens SET verified = 1 WHERE token = :token";
-                $updateStmt = $this->conn->prepare($updateSql);
-                $updateStmt->bindParam(':token', $token);
-                $updateStmt->execute();
-                
                 return array(
                     'status' => 'success',
                     'message' => 'Email vérifiée avec succès.',

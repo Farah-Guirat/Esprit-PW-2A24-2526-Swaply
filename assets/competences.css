@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #f9fafb;
+  margin: 0;
+  padding: 30px;
+}
+
+/* CONTAINER */
+.container {
+  max-width: 900px;
+  margin: auto;
+}
+
+/* TITLE */
+h2 {
+  color: #0f766e;
+  margin-bottom: 20px;
+}
+
+/* CARD */
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+/* INPUTS */
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0 15px 0;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+
+/* BUTTON */
+button {
+  background: #14b8a6;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #0f766e;
+}
+
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background: #14b8a6;
+  color: white;
+  padding: 10px;
+  text-align: left;
+}
+
+td {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/* ACTIONS */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* DELETE BUTTON */
+a {
+  text-decoration: none;
+  background: #ef4444;
+  color: white;
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  width: fit-content;
+}
+
+/* UPDATE FORM */
+.update-form {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.update-form input {
+  padding: 5px;
+  font-size: 12px;
+}
+
+.update-form button {
+  background: #f59e0b;
+  font-size: 12px;
+}
+
+.btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inline-form {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.inline-form input {
+  width: 90px;
+  padding: 4px;
+  font-size: 12px;
+}
+
+.small {
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.red {
+  background: #ef4444;
+  color: white;
+  padding: 5px 8px;
+  border-radius: 6px;
+  text-decoration: none;
+}
+
+.orange {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
+
+

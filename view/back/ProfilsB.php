@@ -17,34 +17,30 @@ $users = $userModel->getAllUsersExceptAdmin($adminEmail, $searchTerm);
 $activeProfiles = $userModel->countUsersExceptAdmin($adminEmail, $searchTerm);
 $genderStats = $userModel->getGenderStats($adminEmail, $searchTerm);
 
-$genderData = [];
-$total = 0;
+// Consolider les genres (homme/male/Homme → H, femme/female/Femme → F)
+$genderConsolidated = ['H' => 0, 'F' => 0];
 foreach ($genderStats as $stat) {
-    $total += $stat['count'];
+    $g = strtolower($stat['genre']);
+    if (in_array($g, ['homme', 'male', 'h'])) {
+        $genderConsolidated['H'] += $stat['count'];
+    } else {
+        $genderConsolidated['F'] += $stat['count'];
+    }
 }
-$startAngle = 0;
-foreach ($genderStats as $stat) {
-    $percentage = $total > 0 ? ($stat['count'] / $total) * 100 : 0;
-    $endAngle = $startAngle + ($percentage / 100) * 360;
-    $genreLower = strtolower($stat['genre']);
-    $color = $genreLower == 'homme' || $genreLower == 'male' ? '#3b82f6' : '#ec4899';
+$total = array_sum($genderConsolidated);
+
+$genderData = [];
+$colors = ['H' => '#3b82f6', 'F' => '#ec4899'];
+foreach ($genderConsolidated as $key => $count) {
+    $percentage = $total > 0 ? round(($count / $total) * 100, 1) : 0;
     $genderData[] = [
-        'genre' => $stat['genre'],
-        'percentage' => round($percentage, 1),
-        'color' => $color,
-        'start' => $startAngle,
-        'end' => $endAngle
+        'genre' => $key,
+        'percentage' => $percentage,
+        'color' => $colors[$key],
     ];
-    $startAngle = $endAngle;
 }
 
-$genderDisplay = '';
-foreach ($genderData as $data) {
-    $genreLower = strtolower($data['genre']);
-    $g = ($genreLower == 'homme' || $genreLower == 'male') ? 'H' : 'F';
-    $genderDisplay .= $g . ': ' . $data['percentage'] . '%, ';
-}
-$genderDisplay = rtrim($genderDisplay, ', ');
+$genderDisplay = implode(' | ', array_map(fn($d) => $d['genre'] . ': ' . $d['percentage'] . '%', $genderData));
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -326,41 +322,7 @@ $genderDisplay = rtrim($genderDisplay, ', ');
 </head>
 <body>
 <div class="flex h-screen overflow-hidden">
-  <div class="sidebar">
-    <div class="logo">
-      <span class="icon">📋</span>
-      <h1>JobBoard Admin</h1>
-    </div>
-    <div class="menu">
-      <a href="swaplyB.php" class="menu-item" id="menu-dashboard">
-        <i class="fa-solid fa-house"></i> Dashboard
-      </a>
-      <a href="#" class="menu-item" id="menu-users">
-        <i class="fa-solid fa-users"></i> Utilisateurs
-      </a>
-      <a href="ProfilsB.php" class="menu-item active" id="menu-profiles">
-        <i class="fa-solid fa-user"></i> Profils
-      </a>
-      <a href="#" class="menu-item" id="menu-offres">
-        <i class="fa-solid fa-briefcase"></i> Offres & Demandes
-      </a>
-      <a href="#" class="menu-item" id="menu-publications">
-        <i class="fa-solid fa-newspaper"></i> Publications
-      </a>
-      <a href="#" class="menu-item" id="menu-conversations">
-        <i class="fa-solid fa-comment-dots"></i> Conversations
-      </a>
-      <a href="#" class="menu-item" id="menu-reclamations">
-        <i class="fa-solid fa-exclamation-triangle"></i> Réclamations
-      </a>
-      <a href="#" class="menu-item" id="menu-stats">
-        <i class="fa-solid fa-chart-bar"></i> Statistiques
-      </a>
-      <a href="#" class="menu-item" id="menu-settings">
-        <i class="fa-solid fa-gear"></i> Paramètres
-      </a>
-    </div>
-  </div>
+<?php $currentPage = 'profiles'; require __DIR__ . '/sidebar.php'; ?>
   <div class="main-content">
     <header class="header">
       <h2 id="page-title">Profils</h2>
@@ -380,7 +342,7 @@ $genderDisplay = rtrim($genderDisplay, ', ');
             <p class="role">Super Admin</p>
           </div>
         </div>
-        <a href="../../controller/logout.php" class="logout-btn" onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?');">
+        <a href="/swaply/controller/logout.php" style="display:flex;align-items:center;gap:8px;background:#fee2e2;color:#dc2626;padding:8px 16px;border-radius:30px;font-size:13px;font-weight:500;text-decoration:none;transition:all 0.2s;" onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?');">
           <i class="fa-solid fa-sign-out-alt"></i> Déconnexion
         </a>
       </div>
@@ -418,9 +380,9 @@ $genderDisplay = rtrim($genderDisplay, ', ');
           <div class="stat-pill">
             <div class="stat-icon">👫</div>
             <div>
-              <div class="stat-num" style="width: 100px; height: 20px; background: #e5e7eb; border-radius: 10px; overflow: hidden; margin: 0 auto;">
+              <div class="stat-num" style="width: 120px; height: 14px; background: #e5e7eb; border-radius: 10px; overflow: hidden; margin: 6px auto; display:flex;">
                 <?php foreach ($genderData as $data): ?>
-                  <span style="display: inline-block; height: 100%; width: <?=$data['percentage']?>%; background: <?=$data['color']?>;"></span>
+                  <div style="height: 100%; width: <?=$data['percentage']?>%; background: <?=$data['color']?>;"></div>
                 <?php endforeach; ?>
               </div>
               <div class="stat-label"><?=$genderDisplay?></div>

@@ -6,25 +6,29 @@ function showPage(page) {
   const activeMenu = document.getElementById('menu-' + page);
   if (activeMenu) activeMenu.classList.add('active');
 
-  document.getElementById('page-title').textContent = 
-    page === 'dashboard' ? 'Dashboard' : page.charAt(0).toUpperCase() + page.slice(1);
+  const pageTitle = document.getElementById('page-title');
+  if (pageTitle) {
+    pageTitle.textContent = page === 'dashboard' ? 'Dashboard' : page.charAt(0).toUpperCase() + page.slice(1);
+  }
 
   const header = document.getElementById('main-header');
+  const dashboardPage = document.getElementById('dashboard-page');
+  const otherPages = document.getElementById('other-pages');
 
-  if (page === 'dashboard') {
-    document.getElementById('dashboard-page').classList.remove('hidden');
-    document.getElementById('other-pages').classList.add('hidden');
-
-    header.classList.remove('hidden'); // 
-  } else {
-    document.getElementById('dashboard-page').classList.add('hidden');
-    document.getElementById('other-pages').classList.remove('hidden');
-
-    header.classList.add('hidden'); // 
-    document.getElementById('other-pages').innerHTML = ""; // page vide
+  if (page === 'dashboard' && dashboardPage && otherPages) {
+    dashboardPage.classList.remove('hidden');
+    otherPages.classList.add('hidden');
+    if (header) header.classList.remove('hidden');
+  } else if (otherPages) {
+    if (dashboardPage) dashboardPage.classList.add('hidden');
+    otherPages.classList.remove('hidden');
+    if (header) header.classList.add('hidden');
+    otherPages.innerHTML = "";
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  showPage('dashboard');
+  if (document.getElementById('dashboard-page')) {
+    showPage('dashboard');
+  }
 });

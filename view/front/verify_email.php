@@ -59,23 +59,22 @@ if (empty($token)) {
                         $stmt->execute();
                         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-
-                        // Sauvegarder la clé publique WebAuthn si disponible
-                        if (!empty($userData['face_pubkey'])) {
-                            $userModel->saveWebAuthnCredential(
-                                $user['id_u'],
-                                $userData['face_id'],
-                                $userData['face_pubkey'],
-                                isset($userData['face_sign_count']) ? (int)$userData['face_sign_count'] : 0
-                            );
-                            // Recharger l'utilisateur pour avoir les données à jour en session
-                            $stmt2 = $conn->prepare("SELECT * FROM utilisateurs WHERE id_u = :id LIMIT 1");
-                            $stmt2->bindParam(':id', $user['id_u']);
-                            $stmt2->execute();
-                            $user = $stmt2->fetch(PDO::FETCH_ASSOC);
-                        }
-                        
                         if ($user) {
+                            // Sauvegarder la clé publique WebAuthn si disponible
+                            if (!empty($userData['face_pubkey'])) {
+                                $userModel->saveWebAuthnCredential(
+                                    $user['id_u'],
+                                    $userData['face_id'],
+                                    $userData['face_pubkey'],
+                                    isset($userData['face_sign_count']) ? (int)$userData['face_sign_count'] : 0
+                                );
+                                // Recharger l'utilisateur pour avoir les données à jour en session
+                                $stmt2 = $conn->prepare("SELECT * FROM utilisateurs WHERE id_u = :id LIMIT 1");
+                                $stmt2->bindParam(':id', $user['id_u']);
+                                $stmt2->execute();
+                                $user = $stmt2->fetch(PDO::FETCH_ASSOC);
+                            }
+
                             // Marquer l'email comme vérifié
                             $sql = "UPDATE utilisateurs SET email_verified = 1 WHERE id_u = :id";
                             $stmt = $conn->prepare($sql);
@@ -94,10 +93,19 @@ if (empty($token)) {
                             header("Location: /swaply/view/front/swaplyf.php?account_created=1");
                             exit();
                         }
+
+                        $message = 'Le compte a été créé, mais impossible de charger l\'utilisateur. Réessayez.';
+                        $messageType = 'error';
+                        error_log('verify_email.php: compte créé mais utilisateur introuvable pour ' . $userData['email']);
+                    } else {
+                        $message = 'Impossible de créer le compte. L\'email existe peut-être déjà ou une erreur serveur est survenue.';
+                        $messageType = 'error';
+                        error_log('verify_email.php: échec de register() pour ' . $userData['email']);
                     }
                 } catch (Exception $e) {
                     $message = 'Erreur lors de la création du compte: ' . $e->getMessage();
                     $messageType = 'error';
+                    error_log('verify_email.php exception: ' . $e->getMessage());
                 }
             } else {
                 $message = $result['message'];

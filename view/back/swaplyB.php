@@ -3,6 +3,12 @@ session_start();
 
 require_once __DIR__ . "/../../config/Database.php";
 require_once __DIR__ . "/../../model/User.php";
+require_once __DIR__ . "/../../model/Publication.php";
+require_once __DIR__ . "/../../model/Commentaire.php";
+require_once __DIR__ . "/../../model/Story.php";
+require_once __DIR__ . "/../../model/Report.php";
+require_once __DIR__ . "/../../controller/AdminController.php";
+require_once __DIR__ . "/../../model/Statistiques.php";
 
 if (!isset($_SESSION['user']) || $_SESSION['user']['email'] !== 'klai.aziz@admin.tn') {
     header("Location: ../front/login.php");
@@ -12,10 +18,18 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['email'] !== 'klai.aziz@admin
 $database = new Database();
 $conn = $database->connect();
 $userModel = new User($conn);
+$publicationModel = new Publication($conn);
+$commentModel = new Commentaire($conn);
+$storyModel = new Story($conn);
+$reportModel = new Report($conn);
+$adminController = new AdminController();
+
 $totalUsers = $userModel->countUsersExceptAdmin('klai.aziz@admin.tn');
 $adminPhoto = $_SESSION['user']['photo'] ?? null;
+$dashboardData = $adminController->getDashboardData();
+
 ?>
-<!DOCTYPE html>
+<!DOCTYPE html>>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -23,6 +37,7 @@ $adminPhoto = $_SESSION['user']['photo'] ?? null;
   <title>Back Office - JobBoard</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
 
@@ -36,29 +51,31 @@ $adminPhoto = $_SESSION['user']['photo'] ?? null;
     </div>
 
     <div class="menu">
-      <a href="#" onclick="showPage('dashboard')" class="menu-item active" id="menu-dashboard">
+       <a href="#" onclick="showPage('dashboard')" class="menu-item active" id="menu-dashboard">
         <i class="fa-solid fa-house"></i> Dashboard
-      </a>
-      <a href="#" onclick="showPage('users')" class="menu-item" id="menu-users">
-        <i class="fa-solid fa-users"></i> Utilisateurs
       </a>
       <a href="ProfilsB.php" class="menu-item" id="menu-profiles">
         <i class="fa-solid fa-user"></i> Profils
       </a>
-      <a href="#" onclick="showPage('offres')" class="menu-item" id="menu-offres">
-        <i class="fa-solid fa-briefcase"></i> Offres & Demandes
+       <a href="/swaply/view/back/projets.php" onclick="showPage('projets')" class="menu-item" id="menu-projets">
+        <i class="fa-solid fa-file"></i> Projets
       </a>
-      <a href="#" onclick="showPage('publications')" class="menu-item" id="menu-publications">
+      
+     <a href="/swaply/public/index.php?action=dashboard" class="menu-item" id="menu-dashboard">
+    <i class="fa-solid fa-briefcase"></i> Offres & Demandes
+</a>
+      
+      <a href="publication_back.php" class="menu-item" id="menu-publications">
         <i class="fa-solid fa-newspaper"></i> Publications
       </a>
-      <a href="#" onclick="showPage('conversations')" class="menu-item" id="menu-conversations">
+      <a href="/swaply/view/back/conversations.php" class="menu-item" id="menu-conversations">
         <i class="fa-solid fa-comment-dots"></i> Conversations
+      </a>
+      <a href="/swaply/view/back/messages.php" class="menu-item" id="menu-messages">
+        <i class="fa-solid fa-envelope"></i> Messages
       </a>
       <a href="#" onclick="showPage('reclamations')" class="menu-item" id="menu-reclamations">
         <i class="fa-solid fa-exclamation-triangle"></i> Réclamations
-      </a>
-      <a href="#" onclick="showPage('stats')" class="menu-item" id="menu-stats">
-        <i class="fa-solid fa-chart-bar"></i> Statistiques
       </a>
       <a href="#" onclick="showPage('settings')" class="menu-item" id="menu-settings">
         <i class="fa-solid fa-gear"></i> Paramètres
@@ -111,29 +128,19 @@ $adminPhoto = $_SESSION['user']['photo'] ?? null;
             <p class="kpi-change positive">+8% ce mois</p>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">Offres publiées</p>
-            <p class="kpi-number">847</p>
-            <p class="kpi-change positive">+23 aujourd’hui</p>
+            <p class="kpi-label">Publications</p>
+            <p class="kpi-number"><?= number_format($dashboardData['total_pubs'], 0, '.', ' ') ?></p>
+            <p class="kpi-change positive">Actives</p>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">Demandes en cours</p>
-            <p class="kpi-number">312</p>
-            <p class="kpi-change negative">-5%</p>
+            <p class="kpi-label">Commentaires</p>
+            <p class="kpi-number"><?= number_format($dashboardData['total_coms'], 0, '.', ' ') ?></p>
+            <p class="kpi-change positive">Total</p>
           </div>
           <div class="kpi-card">
-            <p class="kpi-label">Conversations actives</p>
-            <p class="kpi-number">184</p>
-            <p class="kpi-change positive">+12</p>
-          </div>
-          <div class="kpi-card">
-            <p class="kpi-label">Réclamations en attente</p>
-            <p class="kpi-number red">27</p>
-            <p class="kpi-change negative">Attention</p>
-          </div>
-          <div class="kpi-card">
-            <p class="kpi-label">Publications totales</p>
-            <p class="kpi-number">1 392</p>
-            <p class="kpi-change positive">+41 ce mois</p>
+            <p class="kpi-label">Likes totaux</p>
+            <p class="kpi-number"><?= number_format($dashboardData['total_likes'], 0, '.', ' ') ?></p>
+            <p class="kpi-change positive">Engagement</p>
           </div>
         </div>
       </div>
@@ -147,5 +154,26 @@ $adminPhoto = $_SESSION['user']['photo'] ?? null;
 </div>
 
 <script src="script.js"></script>
+<script src="../../assets/recl/script.js"></script>
+<script>
+function toggleAll(source) {
+    const checkboxes = document.querySelectorAll('.comment-checkbox');
+    checkboxes.forEach(cb => cb.checked = source.checked);
+}
+
+function editComment(id, currentContent) {
+    const newContent = prompt('Modifier le commentaire:', currentContent);
+    if (newContent !== null && newContent !== currentContent) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.innerHTML = `
+            <input type="hidden" name="edit_comment" value="${id}">
+            <input type="hidden" name="edit_contenu" value="${newContent.replace(/"/g, '&quot;')}">
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
 </body>
 </html>

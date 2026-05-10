@@ -6,8 +6,7 @@ require_once "../config/EmailManager.php";
 require_once "../model/User.php";
 require_once "../model/EmailVerification.php";
 
-$db = new Database();
-$conn = $db->connect();
+$conn = Database::getInstance();
 $userModel = new User($conn);
 $emailVerification = new EmailVerification($conn);
 $emailManager = new EmailManager();
@@ -17,22 +16,25 @@ $emailManager = new EmailManager();
 // 🔵 SIGNUP
 // ======================
 if (isset($_POST['signup'])) {
+    error_log("Signup attempt for email: " . $_POST['email']);
 
     $nom = $_POST['firstname'];
     $prenom = $_POST['lastname'];
     $email = $_POST['email'];
     $password = $_POST['password'];
     $genre = $_POST['gender'];
-    $telephone = $_POST['phone'];
+    $telephone = preg_replace('/[^\d]/', '', $_POST['phone']); // Keep only digits
     $date_naissance = $_POST['date_naissance'];
     $captcha = isset($_POST['captcha']) ? trim($_POST['captcha']) : '';
 
     if (empty($nom) || empty($prenom) || empty($email) || empty($password)) {
+        error_log("Signup failed: empty fields");
         header("Location: /swaply/view/front/register.php?error=empty");
         exit();
     }
 
     if (empty($captcha) || !isset($_SESSION['captcha_answer_register']) || intval($captcha) !== intval($_SESSION['captcha_answer_register'])) {
+        error_log("Signup failed: captcha incorrect. Provided: $captcha, Expected: " . $_SESSION['captcha_answer_register']);
         unset($_SESSION['captcha_answer_register']);
         header("Location: /swaply/view/front/register.php?error=captcha");
         exit();
@@ -41,12 +43,14 @@ if (isset($_POST['signup'])) {
     unset($_SESSION['captcha_answer_register']);
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        error_log("Signup failed: invalid email: $email");
         header("Location: /swaply/view/front/register.php?error=email");
         exit();
     }
 
     // Vérifier si l'email existe déjà
     if ($userModel->getUserByEmail($email)) {
+        error_log("Signup failed: duplicate email: $email");
         header("Location: /swaply/view/front/register.php?error=duplicate");
         exit();
     }
@@ -82,15 +86,53 @@ if (isset($_POST['signup'])) {
         'face_sign_count' => $face_sign_count
     );
 
+    $host = isset($_SERVER['HTTP_HOST']) ? strtolower($_SERVER['HTTP_HOST']) : '';
+    $isLocalhost = str_contains($host, 'localhost') || str_contains($host, '127.0.0.1') || str_contains($host, '::1');
+
+    if ($isLocalhost) {
+        // En local, créer le compte immédiatement et envoyer un email d'information.
+        $created = $userModel->register(
+            $nom,
+            $prenom,
+            $email,
+            $passwordHash,
+            $genre,
+            $telephone,
+            $date_naissance,
+            $face_id,
+            1
+        );
+
+        if ($created) {
+            $emailManager->sendWelcomeEmail($email);
+
+            $user = $userModel->getUserByEmail($email);
+            if ($user) {
+                $_SESSION['user'] = $user;
+                if ($user['email'] === 'klai.aziz@admin.tn') {
+                    header("Location: /swaply/view/back/swaplyB.php?account_created=1");
+                    exit();
+                }
+                header("Location: /swaply/view/front/swaplyf.php?account_created=1");
+                exit();
+            }
+        }
+
+        header("Location: /swaply/view/front/register.php?error=local_creation_failed");
+        exit();
+    }
+
     // Créer un token de vérification
     $token = $emailVerification->createToken($email, $userData);
 
     if ($token) {
+        error_log("Token created successfully for $email: $token");
         // Générer le lien de vérification
         $verificationLink = "http://" . $_SERVER['HTTP_HOST'] . "/swaply/view/front/verify_email.php?token=" . $token;
         
         // Envoyer l'email
-        $emailManager->sendVerificationEmail($email, $verificationLink);
+        $emailSent = $emailManager->sendVerificationEmail($email, $verificationLink);
+        error_log("Email sent result for $email: " . ($emailSent ? 'success' : 'failed'));
         
         // Stocker le token et l'email en session pour afficher le message
         $_SESSION['verification_email'] = $email;
@@ -100,6 +142,7 @@ if (isset($_POST['signup'])) {
         header("Location: /swaply/view/front/register.php?verification_sent=1&email=" . urlencode($email));
         exit();
     } else {
+        error_log("Token creation failed for $email");
         header("Location: /swaply/view/front/register.php?error=verification_failed");
         exit();
     }
@@ -150,6 +193,7 @@ if (isset($_POST['login'])) {
 
     if ($user) {
         $_SESSION['user'] = $user;
+        $_SESSION['id_user'] = $user['id_u'];  // ✅ Pour compatibilité avec messagerie.php
 
         if ($email === 'klai.aziz@admin.tn') {
             header("Location: /swaply/view/back/swaplyB.php");

@@ -37,16 +37,16 @@ class User {
     }
 
     // ✔ REGISTER (use this only)
-    public function register($nom, $prenom, $email, $password, $genre, $telephone, $date_naissance, $face_id = null) {
+    public function register($nom, $prenom, $email, $password, $genre, $telephone, $date_naissance, $face_id = null, $email_verified = 0) {
         // Check if email already exists
         if ($this->getUserByEmail($email)) {
             throw new Exception("L'email est déjà utilisé.");
         }
 
         $sql = "INSERT INTO utilisateurs
-        (nom, prenom, email, password, genre, telephone, date_naissance, photo, face_id, banned)
+        (nom, prenom, email, password, genre, telephone, date_naissance, photo, face_id, banned, email_verified)
         VALUES 
-        (:nom, :prenom, :email, :password, :genre, :telephone, :date_naissance, NULL, :face_id, 0)";
+        (:nom, :prenom, :email, :password, :genre, :telephone, :date_naissance, NULL, :face_id, 0, :email_verified)";
 
         $stmt = $this->conn->prepare($sql);
 
@@ -58,6 +58,7 @@ class User {
         $stmt->bindParam(':telephone', $telephone);
         $stmt->bindParam(':date_naissance', $date_naissance);
         $stmt->bindParam(':face_id', $face_id);
+        $stmt->bindParam(':email_verified', $email_verified);
 
         return $stmt->execute();
     }
